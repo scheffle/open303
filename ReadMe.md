@@ -1,3 +1,24 @@
+# VST3 port of Open303
+
+## How to build
+
+### You need:
+
+    * cmake
+    * VST SDK 3.7.8
+    * compiler with c++17 support
+
+### Build:
+
+```
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=RELEASE -Dvst3sdk_SOURCE_DIR=$PATH_TO_THE_VST3_SDK ../
+cmake --build .
+```
+
+## Original Readme.txt:
+
 Open303 is a free and open source emulation of the famous Roland TB-303 bass synthesizer for the VST plugin interface (VST is a trademark of Steinberg Media Technologies GmbH). 
 
 In order to compile it from the source code, you need the VST-SDK v2.4 from Steinberg and drop it into the folder 'Libraries', such that the directory vstsdk2.4 (from the SDK) exists as direct subfolder of 'Libraries'. 
