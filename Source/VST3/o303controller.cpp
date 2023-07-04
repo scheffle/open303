@@ -86,13 +86,31 @@ struct Controller : EditControllerEx1, IMidiMapping
 			return kInvalidArgument;
 		switch (midiControllerNumber)
 		{
-			case ControllerNumbers::kCtrlVolume: id = asIndex (ParameterID::Volume); break;
-			case ControllerNumbers::kCtrlFilterCutoff: id = asIndex (ParameterID::Cutoff); break;
+			case ControllerNumbers::kCtrlVolume:
+			{
+				id = asIndex (ParameterID::Volume);
+				return kResultTrue;
+			}
+			case ControllerNumbers::kCtrlFilterCutoff:
+			{
+				id = asIndex (ParameterID::Cutoff);
+				return kResultTrue;
+			}
 			case ControllerNumbers::kCtrlFilterResonance:
+			{
 				id = asIndex (ParameterID::Resonance);
-				break;
-			case ControllerNumbers::kCtrlGPC6: id = asIndex (ParameterID::Envmod); break;
-			case ControllerNumbers::kPitchBend: id = asIndex (ParameterID::PitchBend); break;
+				return kResultTrue;
+			}
+			case ControllerNumbers::kCtrlGPC6:
+			{
+				id = asIndex (ParameterID::Envmod);
+				return kResultTrue;
+			}
+			case ControllerNumbers::kPitchBend:
+			{
+				id = asIndex (ParameterID::PitchBend);
+				return kResultTrue;
+			}
 		}
 		return kResultFalse;
 	}
