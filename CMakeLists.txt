@@ -102,7 +102,9 @@ if(SMTG_ENABLE_VSTGUI_SUPPORT)
         RESOURCES
             "Resource/editor.uidesc"
             "Resource/PlainKnob.png"
+            "Resource/PlainKnob_2.0x.png"
             "Resource/LED.png"
+            "Resource/LED_2.0x.png"
     )
 endif()
 

@@ -8,11 +8,19 @@
 				"multiframe-size": "14, 14",
 				"path": "LED.png"
 			},
+			"LED_2.0x": {
+				"path": "LED_2.0x.png",
+				"scale-factor": "2"
+			},
 			"PlainKnob": {
 				"mulitframe-frames-per-row": "31",
 				"multiframe-num-frames": "31",
 				"multiframe-size": "66, 66",
 				"path": "PlainKnob.png"
+			},
+			"PlainKnob_2.0x": {
+				"path": "PlainKnob_2.0x.png",
+				"scale-factor": "2"
 			}
 		},
 		"fonts": {
@@ -110,7 +118,7 @@
 				"SplitViewSize_1_1": "0.5113484646194926819262605022231582552195",
 				"SplitViewSize_2_0": "0.7209507042253521236219171441916842013597",
 				"SplitViewSize_2_1": "0.2746478873239436846453997986827744171023",
-				"TabSwitchValue": "1",
+				"TabSwitchValue": "4",
 				"Version": "1"
 			},
 			"UITemplateController": {
@@ -127,7 +135,7 @@
 				"SelectedRow": "1"
 			},
 			"UIBitmapsDataSource": {
-				"SelectedRow": "0"
+				"SelectedRow": "1"
 			},
 			"UIFontsDataSource": {
 				"SelectedRow": "0"
@@ -327,7 +335,7 @@
 											"text-inset": "0, 0",
 											"text-rotation": "0",
 											"text-shadow-offset": "1, 1",
-											"title": "440",
+											"title": "433",
 											"transparent": "false",
 											"value-precision": "2",
 											"wants-focus": "false",
@@ -444,7 +452,7 @@
 											"text-inset": "0, 0",
 											"text-rotation": "0",
 											"text-shadow-offset": "1, 1",
-											"title": "482",
+											"title": "540",
 											"transparent": "false",
 											"value-precision": "2",
 											"wants-focus": "false",
@@ -561,7 +569,7 @@
 											"text-inset": "0, 0",
 											"text-rotation": "0",
 											"text-shadow-offset": "1, 1",
-											"title": "42",
+											"title": "35",
 											"transparent": "false",
 											"value-precision": "2",
 											"wants-focus": "false",
@@ -678,7 +686,7 @@
 											"text-inset": "0, 0",
 											"text-rotation": "0",
 											"text-shadow-offset": "1, 1",
-											"title": "62",
+											"title": "68",
 											"transparent": "false",
 											"value-precision": "2",
 											"wants-focus": "false",
@@ -795,7 +803,7 @@
 											"text-inset": "0, 0",
 											"text-rotation": "0",
 											"text-shadow-offset": "1, 1",
-											"title": "79",
+											"title": "67",
 											"transparent": "false",
 											"value-precision": "2",
 											"wants-focus": "false",
