@@ -368,7 +368,7 @@ struct Processor : AudioEffect
 				*left = *right = static_cast<SampleType> (open303Core.getSample ());
 				assert (!isnan (*left));
 				assert (!isinf (*left));
-				peak += *left;
+				peak += std::abs (*left);
 			}
 			sampleCounter += data.numSamples;
 		});
@@ -378,7 +378,7 @@ struct Processor : AudioEffect
 			data.outputs[0].silenceFlags = 0x3;
 		}
 
-		peakUpdater.process (peak, data);
+		peakUpdater.process (expToNormalized<ParamValue> (0.00001, 1., peak / data.numSamples), data);
 	}
 
 	tresult PLUGIN_API process (Steinberg::Vst::ProcessData& data) override
