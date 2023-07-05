@@ -327,13 +327,15 @@ struct Processor : AudioEffect
 		using SampleType =
 		    std::conditional_t<SampleSize == SymbolicSampleSizes::kSample32, float, double>;
 
+		static constexpr auto SampleAccuracy = 4;
+
 		auto eventIterator = begin (data.inputEvents);
 		auto eventEndIterator = end (data.inputEvents);
 		advanceToNextNoteEvent (eventIterator, eventEndIterator);
-		auto sampleCounter = 0;
+		auto sampleCounter = SampleAccuracy;
 		auto peak = static_cast<SampleType> (0.);
 
-		ProcessDataSlicer slicer (8);
+		ProcessDataSlicer slicer (SampleAccuracy);
 		slicer.process<SampleSize> (data, [&] (ProcessData& data) {
 			for (auto index = 0u; index < parameter.size (); ++index)
 			{
@@ -347,11 +349,13 @@ struct Processor : AudioEffect
 			if (eventIterator != eventEndIterator)
 			{
 				eventIterator->sampleOffset -= data.numSamples;
-				if (eventIterator->sampleOffset <= 0)
+				while (eventIterator->sampleOffset <= 0)
 				{
 					handleEvent (*eventIterator);
 					++eventIterator;
 					advanceToNextNoteEvent (eventIterator, eventEndIterator);
+					if (eventIterator == eventEndIterator)
+						break;
 					eventIterator->sampleOffset -= sampleCounter;
 				}
 			}
@@ -368,6 +372,7 @@ struct Processor : AudioEffect
 			}
 			sampleCounter += data.numSamples;
 		});
+	
 		if (peak == static_cast<SampleType> (0.))
 		{
 			data.outputs[0].silenceFlags = 0x3;
