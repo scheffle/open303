@@ -1,12 +1,21 @@
 #include "o303pids.h"
 #include "parameter.h"
 #include "public.sdk/source/vst/vsteditcontroller.cpp"
+#include "public.sdk/source/vst/vsthelpers.h"
 #include "base/source/fstreamer.h"
 #include "pluginterfaces/vst/ivstmidicontrollers.h"
 
 #ifdef SMTG_ENABLE_VSTGUI_SUPPORT
+#include "vstgui/lib/controls/coptionmenu.h"
+#include "vstgui/lib/controls/ioptionmenulistener.h"
+#include "vstgui/lib/iviewlistener.h"
+#include "vstgui/lib/algorithm.h"
 #include "vstgui/plugin-bindings/vst3editor.h"
+#include "vstgui/uidescription/uiattributes.h"
+using namespace VSTGUI;
 #endif
+
+#include <string_view>
 
 //------------------------------------------------------------------------
 namespace o303 {
@@ -15,8 +24,105 @@ using namespace Steinberg;
 using namespace Steinberg::Vst;
 
 //------------------------------------------------------------------------
+struct EditorDelegate
+#ifdef SMTG_ENABLE_VSTGUI_SUPPORT
+: VST3EditorDelegate, OptionMenuListenerAdapter, ViewListenerAdapter
+{
+	void setZoom (double zoom)
+	{
+		uiZoom = zoom;
+	}
+	
+	double getZoom () const { return uiZoom; }
+
+	void didOpen (VST3Editor* editor) override
+	{
+		editor->setAllowedZoomFactors (zoomFactors);
+		editor->setZoomFactor (uiZoom);
+	}
+	
+	void onZoomChanged (VST3Editor* editor, double newZoom) override
+	{
+		uiZoom = newZoom;
+	}
+	
+	CView* verifyView (CView* view, const UIAttributes& attributes,
+	                   const IUIDescription* description, VST3Editor* editor) override
+	{
+		if (auto customViewName = attributes.getAttributeValue (IUIDescription::kCustomViewName))
+		{
+			if (*customViewName == "SetupMenu")
+			{
+				if (auto menu = dynamic_cast<COptionMenu*> (view))
+				{
+					menu->registerViewListener (this);
+					menu->registerOptionMenuListener (this);
+					setupZoomMenu (menu, editor);
+				}
+			}
+		}
+		return view;
+	}
+
+	void viewWillDelete (CView* view) override
+	{
+		if (auto menu = dynamic_cast<COptionMenu*>(view))
+			menu->unregisterOptionMenuListener (this);
+		view->unregisterViewListener (this);
+	}
+
+	void setupZoomMenu (COptionMenu* menu, VST3Editor* editor)
+	{
+		menu->setStyle (menu->getStyle () | COptionMenu::kMultipleCheckStyle);
+		auto titleItem = new CMenuItem ("UI Zoom");
+		titleItem->setEnabled (false);
+		menu->addEntry (titleItem);
+		for (auto index = 0u; index < zoomFactors.size (); ++index)
+		{
+			auto factor = zoomFactors[index];
+			UTF8String factorString = std::to_string (static_cast<int32_t> (factor * 100.));
+			factorString += " %";
+			auto item = new CCommandMenuItem ({factorString, static_cast<int32_t> (index)});
+			item->setActions ([editor, factor] (auto item) {
+				editor->setZoomFactor (factor);
+			});
+			menu->addEntry (item);
+		}
+	}
+
+	void onOptionMenuPrePopup (COptionMenu* menu) override
+	{
+		if (auto index = indexOf (zoomFactors.begin (), zoomFactors.end (), uiZoom))
+		{
+			for (auto item : *menu->getItems ())
+			{
+				if (item->getTag () >= 0)
+				{
+					item->setChecked (item->getTag () == *index);
+				}
+			}
+		}
+	}
+
+private:
+	static const std::vector<double> zoomFactors;
+	double uiZoom {1.};
+};
+#else
+{
+	void setZoom (double zoom) {}
+	double getZoom () const { return 1.; }
+};
+#endif
+#ifdef SMTG_ENABLE_VSTGUI_SUPPORT
+const std::vector<double> EditorDelegate::zoomFactors = {0.75, 1.0, 1.25, 1.50, 1.75, 2.0};
+#endif
+
+//------------------------------------------------------------------------
 struct Controller : EditControllerEx1, IMidiMapping
 {
+	std::unique_ptr<EditorDelegate> editorDelegate {std::make_unique<EditorDelegate> ()};
+
 	//---Interface---------
 	OBJ_METHODS (EditControllerEx1, EditControllerEx1)
 	DEFINE_INTERFACES
@@ -78,6 +184,28 @@ struct Controller : EditControllerEx1, IMidiMapping
 		return kInternalError;
 	}
 
+	tresult PLUGIN_API setState (Steinberg::IBStream* state) override
+	{
+		if (Vst::Helpers::isProjectState (state) == kResultTrue)
+		{
+			IBStreamer streamer (state, kLittleEndian);
+			double zoom;
+			if (streamer.readDouble (zoom))
+				editorDelegate->setZoom (zoom);
+		}
+		return kResultTrue;
+	}
+
+	tresult PLUGIN_API getState (Steinberg::IBStream* state) override
+	{
+		if (Vst::Helpers::isProjectState (state) == kResultTrue)
+		{
+			IBStreamer streamer (state, kLittleEndian);
+			streamer.writeDouble (editorDelegate->getZoom ());
+		}
+		return kResultTrue;
+	}
+
 	tresult PLUGIN_API getMidiControllerAssignment (int32 busIndex, int16 channel,
 	                                                CtrlNumber midiControllerNumber,
 	                                                ParamID& id) override
@@ -118,7 +246,13 @@ struct Controller : EditControllerEx1, IMidiMapping
 #ifdef SMTG_ENABLE_VSTGUI_SUPPORT
 	IPlugView* createView (FIDString name) override
 	{
-		return new VSTGUI::VST3Editor (this, "Open303", "editor.uidesc");
+		if (std::string_view (Vst::ViewType::kEditor) == name)
+		{
+			auto editor = new VST3Editor (this, "Open303", "editor.uidesc");
+			editor->setDelegate (editorDelegate.get ());
+			return editor;
+		}
+		return nullptr;
 	}
 #endif
 };
