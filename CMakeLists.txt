@@ -100,6 +100,7 @@ if(SMTG_ENABLE_VSTGUI_SUPPORT)
     )
     smtg_target_add_plugin_resources(Open303
         RESOURCES
+            "Resource/Background.png"
             "Resource/editor.uidesc"
             "Resource/PlainKnob.png"
             "Resource/PlainKnob_2.0x.png"

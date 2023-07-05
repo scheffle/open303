@@ -76,7 +76,7 @@ static const constexpr VST3::ParamDesc::Norm2ProcNativeFunc decayAltParamValueFu
 //------------------------------------------------------------------------
 static constexpr std::array<VST3::ParamDesc, asIndex (ParameterID::Count)>
     parameterDescriptions = {{
-        {u"waveform", 0.85, {VST3::Range {0., 1., 2}}, nullptr},
+        {u"waveform", 0.85, {VST3::Range {-100., 100., 0}}, nullptr},
         {u"tuning", 0.5, {VST3::Range {400., 480., 0, u"Hz"}}, nullptr, [] (auto v) { return VST3::normalizedToPlain (400., 480., v); } },
         {u"cutoff", 1., {VST3::Range {0., 1., 0, u"Hz"}}, nullptr, [] (auto v) { return normalizedToExp (314., 2394., v); } },
         {u"resonance", 0.5, {VST3::Range {0., 100., 0, u"%"}}, nullptr, [] (auto v) { return VST3::normalizedToPlain (0., 100., v); } },
