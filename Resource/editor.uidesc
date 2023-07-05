@@ -16,6 +16,10 @@
 			}
 		},
 		"fonts": {
+			"Extended": {
+				"font-name": "Arial",
+				"size": "8"
+			},
 			"Open303": {
 				"bold": "true",
 				"font-name": "Arial",
@@ -41,14 +45,47 @@
 			"label.frame": "#000000ff",
 			"label.text": "#000000ff"
 		},
-		"gradients": {},
+		"gradients": {
+			"Default TextButton Gradient Highlighted": [
+				{
+					"rgba": "#b4b4b4ff",
+					"start": "0"
+				},
+				{
+					"rgba": "#646464ff",
+					"start": "1"
+				}
+			],
+			"ext": [
+				{
+					"rgba": "#dcdcdcff",
+					"start": "0"
+				},
+				{
+					"rgba": "#b4b4b4ff",
+					"start": "1"
+				}
+			],
+			"ext.highlighted": [
+				{
+					"rgba": "#e68282ff",
+					"start": "0"
+				},
+				{
+					"rgba": "#bf0909ff",
+					"start": "1"
+				}
+			]
+		},
 		"control-tags": {
 			"accent": "6",
 			"audiopeak": "9",
 			"cutoff": "2",
 			"decay": "5",
+			"decaymode": "11",
 			"envmod": "4",
 			"filtertype": "8",
+			"pitchbend": "10",
 			"resonance": "3",
 			"tuning": "1",
 			"volume": "7",
@@ -66,14 +103,14 @@
 			},
 			"UIEditController": {
 				"EditViewScale": "1",
-				"EditorSize": "0, 0, 931, 663",
-				"SplitViewSize_0_0": "0.634222919937205698026616573770297691226",
-				"SplitViewSize_0_1": "0.334379905808477262407762964357971213758",
-				"SplitViewSize_1_0": "0.4803767660910517878214420761651126667857",
-				"SplitViewSize_1_1": "0.5133437990580848042654338314605411142111",
-				"SplitViewSize_2_0": "0.7604726100966702206918057527218479663134",
-				"SplitViewSize_2_1": "0.234156820622986039381885348120704293251",
-				"TabSwitchValue": "2",
+				"EditorSize": "0, 0, 1136, 775",
+				"SplitViewSize_0_0": "0.6889185580774366268741459862212650477886",
+				"SplitViewSize_0_1": "0.2843791722296395430014115390804363414645",
+				"SplitViewSize_1_0": "0.4833110814419225853555417415918782353401",
+				"SplitViewSize_1_1": "0.5113484646194926819262605022231582552195",
+				"SplitViewSize_2_0": "0.7209507042253521236219171441916842013597",
+				"SplitViewSize_2_1": "0.2746478873239436846453997986827744171023",
+				"TabSwitchValue": "1",
 				"Version": "1"
 			},
 			"UITemplateController": {
@@ -81,10 +118,10 @@
 			},
 			"UIAttributesController": {},
 			"UIViewCreatorDataSource": {
-				"SelectedRow": "9"
+				"SelectedRow": "26"
 			},
 			"UIGradientsDataSource": {
-				"SelectedRow": "-1"
+				"SelectedRow": "1"
 			},
 			"UIColorsDataSource": {
 				"SelectedRow": "1"
@@ -93,7 +130,10 @@
 				"SelectedRow": "0"
 			},
 			"UIFontsDataSource": {
-				"SelectedRow": "2"
+				"SelectedRow": "0"
+			},
+			"UITagsDataSource": {
+				"SelectedRow": "4"
 			}
 		},
 		"templates": {
@@ -404,7 +444,7 @@
 											"text-inset": "0, 0",
 											"text-rotation": "0",
 											"text-shadow-offset": "1, 1",
-											"title": "540",
+											"title": "482",
 											"transparent": "false",
 											"value-precision": "2",
 											"wants-focus": "false",
@@ -521,7 +561,7 @@
 											"text-inset": "0, 0",
 											"text-rotation": "0",
 											"text-shadow-offset": "1, 1",
-											"title": "86",
+											"title": "42",
 											"transparent": "false",
 											"value-precision": "2",
 											"wants-focus": "false",
@@ -638,7 +678,7 @@
 											"text-inset": "0, 0",
 											"text-rotation": "0",
 											"text-shadow-offset": "1, 1",
-											"title": "34",
+											"title": "62",
 											"transparent": "false",
 											"value-precision": "2",
 											"wants-focus": "false",
@@ -755,7 +795,7 @@
 											"text-inset": "0, 0",
 											"text-rotation": "0",
 											"text-shadow-offset": "1, 1",
-											"title": "200",
+											"title": "79",
 											"transparent": "false",
 											"value-precision": "2",
 											"wants-focus": "false",
@@ -822,6 +862,36 @@
 											"wants-focus": "false",
 											"wheel-inc-value": "0.1"
 										}
+									},
+									"CTextButton": {
+										"attributes": {
+											"class": "CTextButton",
+											"control-tag": "decaymode",
+											"default-value": "0",
+											"font": "Extended",
+											"frame-color": "control.frame",
+											"frame-color-highlighted": "control.frame",
+											"frame-width": "-1",
+											"gradient": "ext",
+											"gradient-highlighted": "ext.highlighted",
+											"icon-position": "left",
+											"icon-text-margin": "0",
+											"kick-style": "false",
+											"max-value": "1",
+											"min-value": "0",
+											"mouse-enabled": "true",
+											"opacity": "1",
+											"origin": "63, 22",
+											"round-radius": "2",
+											"size": "15, 10",
+											"text-alignment": "center",
+											"text-color": "label.text",
+											"text-color-highlighted": "control.text",
+											"title": "EX",
+											"transparent": "false",
+											"wants-focus": "true",
+											"wheel-inc-value": "0.1"
+										}
 									}
 								}
 							},
@@ -872,7 +942,7 @@
 											"text-inset": "0, 0",
 											"text-rotation": "0",
 											"text-shadow-offset": "1, 1",
-											"title": "24",
+											"title": "50",
 											"transparent": "false",
 											"value-precision": "2",
 											"wants-focus": "false",
@@ -989,7 +1059,7 @@
 											"text-inset": "0, 0",
 											"text-rotation": "0",
 											"text-shadow-offset": "1, 1",
-											"title": "0.0",
+											"title": "-7.2",
 											"transparent": "false",
 											"value-precision": "2",
 											"wants-focus": "false",
@@ -1068,7 +1138,7 @@
 							"class": "COptionMenu",
 							"control-tag": "filtertype",
 							"default-value": "15",
-							"font": "ParameterValue",
+							"font": "Extended",
 							"font-antialias": "true",
 							"font-color": "control.text",
 							"frame-color": "control.frame",
@@ -1079,16 +1149,16 @@
 							"min-value": "0",
 							"mouse-enabled": "true",
 							"opacity": "1",
-							"origin": "245, 120",
-							"round-rect-radius": "6",
+							"origin": "225, 27",
+							"round-rect-radius": "2",
 							"shadow-color": "~ RedCColor",
-							"size": "70, 20",
+							"size": "40, 10",
 							"style-3D-in": "false",
 							"style-3D-out": "false",
 							"style-no-draw": "false",
 							"style-no-frame": "false",
 							"style-no-text": "false",
-							"style-round-rect": "false",
+							"style-round-rect": "true",
 							"style-shadow-text": "false",
 							"text-alignment": "center",
 							"text-inset": "0, 0",
@@ -1097,43 +1167,6 @@
 							"transparent": "false",
 							"value-precision": "2",
 							"wants-focus": "true",
-							"wheel-inc-value": "0.1"
-						}
-					},
-					"CTextLabel": {
-						"attributes": {
-							"back-color": "label.back",
-							"background-offset": "0, 0",
-							"class": "CTextLabel",
-							"default-value": "0.5",
-							"font": "ParameterTitle",
-							"font-antialias": "true",
-							"font-color": "label.text",
-							"frame-color": "control.frame",
-							"frame-width": "-1",
-							"max-value": "1",
-							"min-value": "0",
-							"mouse-enabled": "false",
-							"opacity": "1",
-							"origin": "175, 120",
-							"round-rect-radius": "6",
-							"shadow-color": "~ RedCColor",
-							"size": "70, 20",
-							"style-3D-in": "false",
-							"style-3D-out": "false",
-							"style-no-draw": "false",
-							"style-no-frame": "false",
-							"style-no-text": "false",
-							"style-round-rect": "false",
-							"style-shadow-text": "false",
-							"text-alignment": "center",
-							"text-inset": "0, 0",
-							"text-rotation": "0",
-							"text-shadow-offset": "1, 1",
-							"title": "Filter",
-							"transparent": "false",
-							"value-precision": "2",
-							"wants-focus": "false",
 							"wheel-inc-value": "0.1"
 						}
 					},

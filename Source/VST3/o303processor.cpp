@@ -151,6 +151,7 @@ struct Processor : AudioEffect
 	Parameters parameter;
 	rosic::Open303 open303Core;
 	ParameterUpdater peakUpdater {asIndex (ParameterID::AudioPeak)};
+	const VST3::ParamDesc::Norm2ProcNativeFunc* decayValueFunc = &decayParamValueFunc;
 
 	Processor ()
 	{
@@ -235,28 +236,69 @@ struct Processor : AudioEffect
 
 	void updateParameter (size_t index, double value)
 	{
-		value = parameterDescriptions[index].toNative (value);
 		switch (static_cast<ParameterID> (index))
 		{
-			case ParameterID::Waveform: open303Core.setWaveform (value); break;
-			case ParameterID::Tuning: open303Core.setTuning (value); break;
-			case ParameterID::Cutoff: open303Core.setCutoff (value); break;
-			case ParameterID::Resonance: open303Core.setResonance (value); break;
-			case ParameterID::Envmod: open303Core.setEnvMod (value); break;
-			case ParameterID::Decay: open303Core.setDecay (value); break;
-			case ParameterID::Accent: open303Core.setAccent (value); break;
-			case ParameterID::Volume: open303Core.setVolume (value); break;
-			case ParameterID::Filter_Type: open303Core.filter.setMode (value); break;
-			case ParameterID::PitchBend: open303Core.setPitchBend (value); break;
+			case ParameterID::Waveform:
+				open303Core.setWaveform (parameterDescriptions[index].toNative (value));
+				break;
+			case ParameterID::Tuning:
+				open303Core.setTuning (parameterDescriptions[index].toNative (value));
+				break;
+			case ParameterID::Cutoff:
+				open303Core.setCutoff (parameterDescriptions[index].toNative (value));
+				break;
+			case ParameterID::Resonance:
+				open303Core.setResonance (parameterDescriptions[index].toNative (value));
+				break;
+			case ParameterID::Envmod:
+				open303Core.setEnvMod (parameterDescriptions[index].toNative (value));
+				break;
+			case ParameterID::Decay:
+				open303Core.setDecay ((*decayValueFunc) (value));
+				break;
+			case ParameterID::Accent:
+				open303Core.setAccent (parameterDescriptions[index].toNative (value));
+				break;
+			case ParameterID::Volume:
+				open303Core.setVolume (parameterDescriptions[index].toNative (value));
+				break;
+			case ParameterID::Filter_Type:
+				open303Core.filter.setMode (parameterDescriptions[index].toNative (value));
+				break;
+			case ParameterID::PitchBend:
+				open303Core.setPitchBend (parameterDescriptions[index].toNative (value));
+				break;
 			case ParameterID::AudioPeak: break;
+			case ParameterID::DecayMode:
+				decayValueFunc =
+				    value < 0.5 ?
+				        &decayParamValueFunc :
+				        &decayAltParamValueFunc;
+				updateParameter (asIndex (ParameterID::Decay),
+				                 parameter[asIndex (ParameterID::Decay)]);
+				break;
 #ifdef O303_EXTENDED_PARAMETERS
-			case ParameterID::Amp_Sustain: open303Core.setAmpSustain (value); break;
-			case ParameterID::Tanh_Shaper_Drive: open303Core.setTanhShaperDrive (value); break;
-			case ParameterID::Tanh_Shaper_Offset: open303Core.setTanhShaperOffset (value); break;
-			case ParameterID::Pre_Filter_Hpf: open303Core.setPreFilterHighpass (value); break;
-			case ParameterID::Feedback_Hpf: open303Core.setFeedbackHighpass (value); break;
-			case ParameterID::Post_Filter_Hpf: open303Core.setPostFilterHighpass (value); break;
-			case ParameterID::Square_Phase_Shift: open303Core.setSquarePhaseShift (value); break;
+			case ParameterID::Amp_Sustain:
+				open303Core.setAmpSustain (parameterDescriptions[index].toNative (value));
+				break;
+			case ParameterID::Tanh_Shaper_Drive:
+				open303Core.setTanhShaperDrive (parameterDescriptions[index].toNative (value));
+				break;
+			case ParameterID::Tanh_Shaper_Offset:
+				open303Core.setTanhShaperOffset (parameterDescriptions[index].toNative (value));
+				break;
+			case ParameterID::Pre_Filter_Hpf:
+				open303Core.setPreFilterHighpass (parameterDescriptions[index].toNative (value));
+				break;
+			case ParameterID::Feedback_Hpf:
+				open303Core.setFeedbackHighpass (parameterDescriptions[index].toNative (value));
+				break;
+			case ParameterID::Post_Filter_Hpf:
+				open303Core.setPostFilterHighpass (parameterDescriptions[index].toNative (value));
+				break;
+			case ParameterID::Square_Phase_Shift:
+				open303Core.setSquarePhaseShift (parameterDescriptions[index].toNative (value));
+				break;
 #endif
 		}
 	}

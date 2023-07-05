@@ -147,6 +147,9 @@ struct Controller : EditControllerEx1, IMidiMapping
 		if (auto param = static_cast<Parameter*> (
 		        parameters.getParameterByIndex (asIndex (ParameterID::Cutoff))))
 		{
+			param->setCustomToNormalizedFunc ([] (const auto&, auto v) {
+				return expToNormalized (314., 2394., v);
+			});
 			param->setCustomToPlainFunc ([] (const auto&, auto v) {
 				return parameterDescriptions[asIndex (ParameterID::Cutoff)].toNative (v);
 			});
@@ -163,6 +166,38 @@ struct Controller : EditControllerEx1, IMidiMapping
 		        parameters.getParameterByIndex (asIndex (ParameterID::AudioPeak))))
 		{
 			param->getInfo ().flags = ParameterInfo::kIsReadOnly;
+		}
+
+		if (auto param = static_cast<Parameter*> (
+		        parameters.getParameterByIndex (asIndex (ParameterID::DecayMode))))
+		{
+			auto listener = [this] (Parameter&,ParamValue value) {
+				if (auto param = static_cast<Parameter*> (
+						parameters.getParameterByIndex (asIndex (ParameterID::Decay))))
+				{
+					if (value < 0.5)
+					{
+						param->setCustomToNormalizedFunc ([] (const auto&, auto v) {
+							return expToNormalized (200., 2000., v);
+						});
+						param->setCustomToPlainFunc (
+						    [] (const auto&, auto v) { return decayParamValueFunc (v); });
+					}
+					else
+					{
+						param->setCustomToNormalizedFunc ([] (const auto&, auto v) {
+							return expToNormalized (30., 3000., v);
+						});
+						param->setCustomToPlainFunc (
+						    [] (const auto&, auto v) { return decayAltParamValueFunc (v); });
+					}
+					param->changed ();
+					if (auto handler = getComponentHandler ())
+						handler->restartComponent (kParamValuesChanged);
+				}
+			};
+			param->addListener (listener);
+			listener (*param, 0.);
 		}
 
 		return kResultTrue;
