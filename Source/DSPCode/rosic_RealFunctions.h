@@ -121,7 +121,7 @@ namespace rosic
 
   INLINE void sinCos(double x, double* sinResult, double* cosResult)
   {
-    #ifdef __GNUC__  // \todo assembly-version causes compiler errors on gcc
+    #if 1 // def __GNUC__  // \todo assembly-version causes compiler errors on gcc
       *sinResult = sin(x);
       *cosResult = cos(x);
     #else
