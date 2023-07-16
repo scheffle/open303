@@ -1,7 +1,7 @@
 #ifndef GlobalFunctions_h
 #define GlobalFunctions_h
 
-#include <math.h>
+#include <cmath>
 #include <stdlib.h>
 #include "GlobalDefinitions.h"
 
@@ -302,10 +302,12 @@ INLINE bool isPowerOfTwo(unsigned int x)
   return false;
 }
 
+#if 0
 INLINE double log2(double x)
 {
   return ONE_OVER_LN2*log(x);
 }
+#endif
 
 INLINE double logB(double x, double b)
 {
