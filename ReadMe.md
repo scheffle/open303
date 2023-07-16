@@ -5,7 +5,8 @@
 ### You need:
 
     * cmake
-    * VST SDK 3.7.8
+    * VST SDK (minimum version 3.7.8)
+    * [vst3utils](https://github.com/scheffle/vst3utils)
     * compiler with c++17 support
 
 ### Build:
@@ -13,9 +14,11 @@
 ```
 mkdir build
 cd build
-cmake -DCMAKE_BUILD_TYPE=RELEASE -Dvst3sdk_SOURCE_DIR=$PATH_TO_THE_VST3_SDK ../
+cmake -DCMAKE_BUILD_TYPE=RELEASE -Dvst3sdk_PATH=Path/To/VST3SDK -Dvst3utils_PATH=Path/To/vst3utils ../
 cmake --build .
 ```
+
+On macOS you should use the Xcode cmake generator : `-GXcode`
 
 ## Original Readme.txt:
 

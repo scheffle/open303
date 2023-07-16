@@ -1,15 +1,15 @@
 #include "o303pids.h"
-#include "parameter.h"
+#include "vst3utils/parameter.h"
 #include "public.sdk/source/vst/vsteditcontroller.cpp"
 #include "public.sdk/source/vst/vsthelpers.h"
 #include "base/source/fstreamer.h"
 #include "pluginterfaces/vst/ivstmidicontrollers.h"
 
 #ifdef SMTG_ENABLE_VSTGUI_SUPPORT
+#include "vstgui/lib/algorithm.h"
 #include "vstgui/lib/controls/coptionmenu.h"
 #include "vstgui/lib/controls/ioptionmenulistener.h"
 #include "vstgui/lib/iviewlistener.h"
-#include "vstgui/lib/algorithm.h"
 #include "vstgui/plugin-bindings/vst3editor.h"
 #include "vstgui/uidescription/uiattributes.h"
 using namespace VSTGUI;
@@ -26,13 +26,12 @@ using namespace Steinberg::Vst;
 //------------------------------------------------------------------------
 struct EditorDelegate
 #ifdef SMTG_ENABLE_VSTGUI_SUPPORT
-: VST3EditorDelegate, OptionMenuListenerAdapter, ViewListenerAdapter
+: VST3EditorDelegate,
+  OptionMenuListenerAdapter,
+  ViewListenerAdapter
 {
-	void setZoom (double zoom)
-	{
-		uiZoom = zoom;
-	}
-	
+	void setZoom (double zoom) { uiZoom = zoom; }
+
 	double getZoom () const { return uiZoom; }
 
 	void didOpen (VST3Editor* editor) override
@@ -40,12 +39,9 @@ struct EditorDelegate
 		editor->setAllowedZoomFactors (zoomFactors);
 		editor->setZoomFactor (uiZoom);
 	}
-	
-	void onZoomChanged (VST3Editor* editor, double newZoom) override
-	{
-		uiZoom = newZoom;
-	}
-	
+
+	void onZoomChanged (VST3Editor* editor, double newZoom) override { uiZoom = newZoom; }
+
 	CView* verifyView (CView* view, const UIAttributes& attributes,
 	                   const IUIDescription* description, VST3Editor* editor) override
 	{
@@ -66,7 +62,7 @@ struct EditorDelegate
 
 	void viewWillDelete (CView* view) override
 	{
-		if (auto menu = dynamic_cast<COptionMenu*>(view))
+		if (auto menu = dynamic_cast<COptionMenu*> (view))
 			menu->unregisterOptionMenuListener (this);
 		view->unregisterViewListener (this);
 	}
@@ -83,9 +79,7 @@ struct EditorDelegate
 			UTF8String factorString = std::to_string (static_cast<int32_t> (factor * 100.));
 			factorString += " %";
 			auto item = new CCommandMenuItem ({factorString, static_cast<int32_t> (index)});
-			item->setActions ([editor, factor] (auto item) {
-				editor->setZoomFactor (factor);
-			});
+			item->setActions ([editor, factor] (auto item) { editor->setZoomFactor (factor); });
 			menu->addEntry (item);
 		}
 	}
@@ -130,7 +124,7 @@ struct Controller : EditControllerEx1, IMidiMapping
 	END_DEFINE_INTERFACES (EditControllerEx1)
 	REFCOUNT_METHODS (EditControllerEx1)
 
-	using Parameter = VST3::Parameter;
+	using Parameter = vst3utils::parameter;
 
 	tresult PLUGIN_API initialize (FUnknown* context) override
 	{
@@ -138,28 +132,10 @@ struct Controller : EditControllerEx1, IMidiMapping
 		if (result != kResultTrue)
 			return result;
 
-		for (auto pid = 0; pid < asIndex (ParameterID::Count); ++pid)
+		for (auto pid = 0u; pid < Parameters::count (); ++pid)
 		{
 			auto param = new Parameter (pid, parameterDescriptions[pid]);
 			parameters.addParameter (param);
-		}
-
-		if (auto param = static_cast<Parameter*> (
-		        parameters.getParameterByIndex (asIndex (ParameterID::Cutoff))))
-		{
-			param->setCustomToNormalizedFunc ([] (const auto&, auto v) {
-				return expToNormalized (314., 2394., v);
-			});
-			param->setCustomToPlainFunc ([] (const auto&, auto v) {
-				return parameterDescriptions[asIndex (ParameterID::Cutoff)].toNative (v);
-			});
-		}
-		if (auto param = static_cast<Parameter*> (
-		        parameters.getParameterByIndex (asIndex (ParameterID::Decay))))
-		{
-			param->setCustomToPlainFunc ([] (const auto&, auto v) {
-				return parameterDescriptions[asIndex (ParameterID::Decay)].toNative (v);
-			});
 		}
 
 		if (auto param = static_cast<Parameter*> (
@@ -171,32 +147,34 @@ struct Controller : EditControllerEx1, IMidiMapping
 		if (auto param = static_cast<Parameter*> (
 		        parameters.getParameterByIndex (asIndex (ParameterID::DecayMode))))
 		{
-			auto listener = [this] (Parameter&,ParamValue value) {
+			auto listener = [this] (Parameter&, ParamValue value) {
 				if (auto param = static_cast<Parameter*> (
-						parameters.getParameterByIndex (asIndex (ParameterID::Decay))))
+				        parameters.getParameterByIndex (asIndex (ParameterID::Decay))))
 				{
 					if (value < 0.5)
 					{
-						param->setCustomToNormalizedFunc ([] (const auto&, auto v) {
-							return expToNormalized (200., 2000., v);
+						param->set_custom_to_normalized_func ([] (const auto&, auto v) {
+							return decayParamValueFunc.to_normalized (v);
 						});
-						param->setCustomToPlainFunc (
-						    [] (const auto&, auto v) { return decayParamValueFunc (v); });
+						param->set_custom_to_plain_func ([] (const auto&, auto v) {
+							return decayParamValueFunc.to_plain (v);
+						});
 					}
 					else
 					{
-						param->setCustomToNormalizedFunc ([] (const auto&, auto v) {
-							return expToNormalized (30., 3000., v);
+						param->set_custom_to_normalized_func ([] (const auto&, auto v) {
+							return decayAltParamValueFunc.to_normalized (v);
 						});
-						param->setCustomToPlainFunc (
-						    [] (const auto&, auto v) { return decayAltParamValueFunc (v); });
+						param->set_custom_to_plain_func ([] (const auto&, auto v) {
+							return decayAltParamValueFunc.to_plain (v);
+						});
 					}
 					param->changed ();
 					if (auto handler = getComponentHandler ())
 						handler->restartComponent (kParamValuesChanged);
 				}
 			};
-			param->addListener (listener);
+			param->add_listener (listener);
 			listener (*param, 0.);
 		}
 
@@ -209,10 +187,10 @@ struct Controller : EditControllerEx1, IMidiMapping
 	{
 		if (auto params = loadParameterState (state))
 		{
-			for (auto i = 0; i < asIndex (ParameterID::Count); ++i)
+			for (auto i = 0u; i < Parameters::count (); ++i)
 			{
 				if (auto param = parameters.getParameter (i))
-					param->setNormalized (params->at (i).getValue ());
+					param->setNormalized (params->at (i).get ());
 			}
 			return kResultTrue;
 		}
@@ -319,7 +297,7 @@ std::optional<Parameters> loadParameterState (Steinberg::IBStream* stream)
 		double value;
 		if (!s.readDouble (value))
 			return {};
-		p.setValue (value);
+		p.set (value);
 	}
 	return {result};
 }
@@ -332,7 +310,7 @@ bool saveParameterState (const Parameters& parameter, Steinberg::IBStream* strea
 	s.writeInt32 (stateVersion);
 	for (const auto& p : parameter)
 	{
-		s.writeDouble (p.getValue ());
+		s.writeDouble (p.get ());
 	}
 	return true;
 }

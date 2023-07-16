@@ -52,11 +52,11 @@
 		},
 		"colors": {
 			"background": "#edededff",
-			"control.back": "#5c5c5cff",
+			"control.back": "#5c5c5ca0",
 			"control.container": "#ffffff69",
 			"control.frame": "#000000ff",
 			"control.text": "#d5d5d5ff",
-			"label.back": "#a1a1a1ff",
+			"label.back": "#a1a1a1a0",
 			"label.frame": "#000000ff",
 			"label.text": "#000000ff"
 		},
@@ -125,7 +125,7 @@
 				"SplitViewSize_1_1": "0.510126582278481066623498918488621711731",
 				"SplitViewSize_2_0": "0.7719424460431654200220918937702663242817",
 				"SplitViewSize_2_1": "0.2244604316546762456940911079072975553572",
-				"TabSwitchValue": "6",
+				"TabSwitchValue": "2",
 				"Version": "1"
 			},
 			"UITemplateController": {
@@ -139,7 +139,7 @@
 				"SelectedRow": "1"
 			},
 			"UIColorsDataSource": {
-				"SelectedRow": "2"
+				"SelectedRow": "5"
 			},
 			"UIBitmapsDataSource": {
 				"SelectedRow": "0"
@@ -672,7 +672,7 @@
 											"text-inset": "0, 0",
 											"text-rotation": "0",
 											"text-shadow-offset": "1, 1",
-											"title": "566",
+											"title": "706",
 											"transparent": "false",
 											"value-precision": "2",
 											"wants-focus": "false",
@@ -826,7 +826,7 @@
 											"text-inset": "0, 0",
 											"text-rotation": "0",
 											"text-shadow-offset": "1, 1",
-											"title": "84",
+											"title": "47",
 											"transparent": "false",
 											"value-precision": "2",
 											"wants-focus": "false",
@@ -980,7 +980,7 @@
 											"text-inset": "0, 0",
 											"text-rotation": "0",
 											"text-shadow-offset": "1, 1",
-											"title": "49",
+											"title": "68",
 											"transparent": "false",
 											"value-precision": "2",
 											"wants-focus": "false",
@@ -1134,7 +1134,7 @@
 											"text-inset": "0, 0",
 											"text-rotation": "0",
 											"text-shadow-offset": "1, 1",
-											"title": "173",
+											"title": "123",
 											"transparent": "false",
 											"value-precision": "2",
 											"wants-focus": "false",
@@ -1318,7 +1318,7 @@
 											"text-inset": "0, 0",
 											"text-rotation": "0",
 											"text-shadow-offset": "1, 1",
-											"title": "22",
+											"title": "0",
 											"transparent": "false",
 											"value-precision": "2",
 											"wants-focus": "false",

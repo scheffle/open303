@@ -22,7 +22,7 @@ FUnknown* createController (void*);
 BEGIN_FACTORY_DEF ("AS", "http://", "email:", 2)
 
 //------------------------------------------------------------------------
-DEF_CLASS  (o303::kOpen303ProcessorUID,
+DEF_CLASS  (o303::ProcessorUID,
 			PClassInfo::kManyInstances,
 			kVstAudioEffectClass,
 			"Open303",
@@ -32,7 +32,7 @@ DEF_CLASS  (o303::kOpen303ProcessorUID,
 			kVstVersionString,
 			o303::createProcessor, nullptr)
 
-DEF_CLASS  (o303::kOpen303ControllerUID,
+DEF_CLASS  (o303::ControllerUID,
 			PClassInfo::kManyInstances,
 			kVstComponentControllerClass,
 			"Open303",

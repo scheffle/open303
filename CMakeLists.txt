@@ -2,15 +2,22 @@ cmake_minimum_required(VERSION 3.14.0 FATAL_ERROR)
 
 set(CMAKE_OSX_DEPLOYMENT_TARGET 10.14 CACHE STRING "")
 
-set(vst3sdk_SOURCE_DIR CACHE PATH ../../vst3sdk)
-if(NOT vst3sdk_SOURCE_DIR)
-    message(FATAL_ERROR "Path to VST3 SDK is empty!")
-endif()
-
 project(open303 VERSION 1.0.0)
 
-add_subdirectory(${vst3sdk_SOURCE_DIR} ${PROJECT_BINARY_DIR}/vst3sdk)
+set(vst3sdk_PATH "../../vst3sdk" CACHE PATH "Path to the VST SDK")
+set(vst3utils_PATH "../../vst3utils" CACHE PATH "Path to vst3utils")
+
+if(NOT vst3sdk_PATH OR NOT EXISTS "${PROJECT_BINARY_DIR}/${vst3sdk_PATH}")
+    message(FATAL_ERROR "You need to provide the path to the VST3 SDK via the variable vst3sdk_PATH !")
+endif()
+if(NOT vst3utils_PATH)
+    message(FATAL_ERROR "You need to provide the path to vst3utils via the variable vst3utils_PATH !")
+endif()
+
+add_subdirectory("${PROJECT_BINARY_DIR}/${vst3sdk_PATH}" ${PROJECT_BINARY_DIR}/vst3sdk)
 smtg_enable_vst3_sdk()
+
+add_subdirectory("${PROJECT_BINARY_DIR}/${vst3utils_PATH}" ${PROJECT_BINARY_DIR}/vst3utils)
 
 add_library(libopen303
      Source/DSPCode/GlobalDefinitions.h
@@ -62,15 +69,11 @@ target_compile_features(libopen303
 
 smtg_add_vst3plugin(Open303
 	SOURCES_LIST
-		Source/VST3/normplain.h
 		Source/VST3/o303cids.h
 		Source/VST3/o303controller.cpp
 		Source/VST3/o303factory.cpp
 		Source/VST3/o303pids.h
 		Source/VST3/o303processor.cpp
-		Source/VST3/paramdesc.h
-		Source/VST3/parameter.cpp
-		Source/VST3/parameter.h
 		Source/VST3/version.h
 )
 
@@ -82,6 +85,7 @@ target_compile_features(Open303
 target_link_libraries(Open303
     PRIVATE
         sdk
+        vst3utils
         libopen303
 )
 

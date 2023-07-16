@@ -2,11 +2,12 @@
 #include "o303cids.h"
 #include "o303pids.h"
 
+#include "vst3utils/event_iterator.h"
+#include "vst3utils/parameter_updater.h"
 #include "public.sdk/source/vst/utility/audiobuffers.h"
 #include "public.sdk/source/vst/utility/processdataslicer.h"
 #include "public.sdk/source/vst/utility/sampleaccurate.h"
 #include "public.sdk/source/vst/vstaudioeffect.h"
-#include "pluginterfaces/vst/ivstevents.h"
 #include "pluginterfaces/vst/ivstparameterchanges.h"
 #include "pluginterfaces/vst/ivstprocesscontext.h"
 
@@ -15,151 +16,31 @@ namespace o303 {
 
 using namespace Steinberg;
 using namespace Steinberg::Vst;
-
-//------------------------------------------------------------------------
-struct EventIterator
-{
-	EventIterator () : eventList (nullptr), index (-1) {}
-	EventIterator (IEventList& eventList) : eventList (&eventList), index (-1) {}
-	EventIterator (IEventList& eventList, int32 index) : eventList (&eventList), index (index)
-	{
-		updateEvent ();
-	}
-
-	bool operator== (const EventIterator& it) const
-	{
-		return index == it.index && it.eventList == eventList;
-	}
-
-	bool operator!= (const EventIterator& it) const
-	{
-		return index != it.index || it.eventList != eventList;
-	}
-
-	EventIterator& operator++ () noexcept
-	{
-		if (index >= 0)
-			++index;
-		updateEvent ();
-		return *this;
-	}
-
-	EventIterator operator+= (size_t adv) noexcept
-	{
-		auto prev = *this;
-		index += static_cast<int32> (adv);
-		updateEvent ();
-		return prev;
-	}
-
-	Event& operator* () { return e; }
-	Event* operator-> () { return &e; }
-
-private:
-	void updateEvent ()
-	{
-		if (!eventList || eventList->getEvent (index, e) != kResultTrue)
-			index = -1;
-	}
-
-	Event e;
-	int32 index;
-	IEventList* eventList;
-};
-
-//------------------------------------------------------------------------
-EventIterator begin (IEventList* eventList)
-{
-	return eventList ? EventIterator (*eventList, 0) : EventIterator ();
-}
-
-//------------------------------------------------------------------------
-EventIterator end (IEventList* eventList)
-{
-	return eventList ? EventIterator (*eventList, -1) : EventIterator ();
-}
+using EventIterator = vst3utils::event_iterator;
+using ParameterUpdater = vst3utils::throttled_parameter_updater;
+using vst3utils::begin;
+using vst3utils::end;
 
 //------------------------------------------------------------------------
 struct Processor : AudioEffect
 {
-	struct ParameterUpdater
-	{
-		ParameterUpdater () noexcept = default;
-		ParameterUpdater (ParamID parameterID) : parameterID (parameterID) {}
-
-		void setParameterID (ParamID pID) noexcept { parameterID = pID; }
-
-		void init (Vst::SampleRate sampleRate, double hertz = 60.) noexcept
-		{
-			updateInterval = static_cast<Vst::TSamples> (sampleRate / hertz);
-			updateCountdown = 0;
-		}
-
-		inline void process (Vst::ParamValue currentValue, Vst::ProcessData& data) noexcept
-		{
-			assert (updateInterval > 0 && "update interval not set");
-			if (reached (data.numSamples))
-			{
-				checkAndSendParameterUpdate (currentValue, data);
-			}
-		}
-
-		template <typename Proc>
-		inline void process (Vst::ParamValue currentValue, Vst::ProcessData& data,
-		                     Proc func) noexcept
-		{
-			assert (updateInterval > 0 && "update interval not set");
-			if (reached (data.numSamples))
-			{
-				checkAndSendParameterUpdate (func (lastValue, currentValue, updateInterval), data);
-			}
-		}
-
-	private:
-		inline bool reached (int32 samples) noexcept
-		{
-			updateCountdown -= samples;
-			if (updateCountdown <= 0)
-			{
-				updateCountdown += updateInterval;
-				// if update interval is smaller than the processing block, make sure we don't
-				// underflow
-				if (updateCountdown <= 0)
-					updateCountdown = updateInterval;
-				return true;
-			}
-			return false;
-		}
-
-		inline void checkAndSendParameterUpdate (Vst::ParamValue newValue,
-		                                         Vst::ProcessData& data) noexcept
-		{
-			if (lastValue == newValue || data.outputParameterChanges == nullptr)
-				return;
-			int32 index;
-			if (auto queue = data.outputParameterChanges->addParameterData (parameterID, index))
-				queue->addPoint (0, newValue, index);
-			lastValue = newValue;
-		}
-
-		Vst::ParamID parameterID {0};
-		Vst::ParamValue lastValue {0};
-		Vst::TSamples updateCountdown {0};
-		Vst::TSamples updateInterval {0};
-	};
-
 	Parameters parameter;
 	rosic::Open303 open303Core;
 	ParameterUpdater peakUpdater {asIndex (ParameterID::AudioPeak)};
-	const VST3::ParamDesc::Norm2ProcNativeFunc* decayValueFunc = &decayParamValueFunc;
+	const vst3utils::param::convert_func* decayValueFunc = &decayParamValueFunc.to_plain;
 
 	Processor ()
 	{
-		setControllerClass (kOpen303ControllerUID);
+		setControllerClass (ControllerUID);
 		for (auto index = 0u; index < parameter.size (); ++index)
 		{
-			parameter[index].setValue (parameterDescriptions[index].defaultNormalized);
-			updateParameter(index, parameter[index]);
+#ifdef O303_EXTENDED_PARAMETERS
+			if (index >= asIndex (ParameterID::Amp_Sustain))
+				parameter[index].set_alpha (1.);
+#endif
+			parameter[index].set (parameterDescriptions[index].default_normalized);
+
+			updateParameter (index, parameter[index]);
 		}
 	}
 
@@ -168,7 +49,6 @@ struct Processor : AudioEffect
 		tresult result = AudioEffect::initialize (context);
 		if (result != kResultOk)
 			return result;
-		addAudioInput (u"Stereo In", Vst::SpeakerArr::kStereo);
 		addAudioOutput (u"Stereo Out", Vst::SpeakerArr::kStereo);
 		addEventInput (u"Event Input", 1);
 		return kResultOk;
@@ -229,75 +109,73 @@ struct Processor : AudioEffect
 				int32 sampleOffset;
 				int32 numPoints = paramQueue->getPointCount ();
 				if (paramQueue->getPoint (numPoints - 1, sampleOffset, value) == kResultTrue)
-					parameter[paramQueue->getParameterId ()].setValue (value);
+					parameter[paramQueue->getParameterId ()].set (value);
 			}
 		}
 	}
 
 	void updateParameter (size_t index, double value)
 	{
+		const auto& pd = parameterDescriptions;
+
 		switch (static_cast<ParameterID> (index))
 		{
 			case ParameterID::Waveform:
-				open303Core.setWaveform (parameterDescriptions[index].toNative (value));
+				open303Core.setWaveform (pd[index].convert.to_plain (value));
 				break;
 			case ParameterID::Tuning:
-				open303Core.setTuning (parameterDescriptions[index].toNative (value));
+				open303Core.setTuning (pd[index].convert.to_plain (value));
 				break;
 			case ParameterID::Cutoff:
-				open303Core.setCutoff (parameterDescriptions[index].toNative (value));
+				open303Core.setCutoff (pd[index].convert.to_plain (value));
 				break;
 			case ParameterID::Resonance:
-				open303Core.setResonance (parameterDescriptions[index].toNative (value));
+				open303Core.setResonance (pd[index].convert.to_plain (value));
 				break;
 			case ParameterID::Envmod:
-				open303Core.setEnvMod (parameterDescriptions[index].toNative (value));
+				open303Core.setEnvMod (pd[index].convert.to_plain (value));
 				break;
-			case ParameterID::Decay:
-				open303Core.setDecay ((*decayValueFunc) (value));
-				break;
+			case ParameterID::Decay: open303Core.setDecay ((*decayValueFunc) (value)); break;
 			case ParameterID::Accent:
-				open303Core.setAccent (parameterDescriptions[index].toNative (value));
+				open303Core.setAccent (pd[index].convert.to_plain (value));
 				break;
 			case ParameterID::Volume:
-				open303Core.setVolume (parameterDescriptions[index].toNative (value));
+				open303Core.setVolume (pd[index].convert.to_plain (value));
 				break;
 			case ParameterID::Filter_Type:
-				open303Core.filter.setMode (parameterDescriptions[index].toNative (value));
+				open303Core.filter.setMode (pd[index].convert.to_plain (value));
 				break;
 			case ParameterID::PitchBend:
-				open303Core.setPitchBend (parameterDescriptions[index].toNative (value));
+				open303Core.setPitchBend (pd[index].convert.to_plain (value));
 				break;
 			case ParameterID::AudioPeak: break;
 			case ParameterID::DecayMode:
-				decayValueFunc =
-				    value < 0.5 ?
-				        &decayParamValueFunc :
-				        &decayAltParamValueFunc;
+				decayValueFunc = value < 0.5 ? &decayParamValueFunc.to_plain :
+				                               &decayAltParamValueFunc.to_plain;
 				updateParameter (asIndex (ParameterID::Decay),
 				                 parameter[asIndex (ParameterID::Decay)]);
 				break;
 #ifdef O303_EXTENDED_PARAMETERS
 			case ParameterID::Amp_Sustain:
-				open303Core.setAmpSustain (parameterDescriptions[index].toNative (value));
+				open303Core.setAmpSustain (pd[index].convert.to_plain (value));
 				break;
 			case ParameterID::Tanh_Shaper_Drive:
-				open303Core.setTanhShaperDrive (parameterDescriptions[index].toNative (value));
+				open303Core.setTanhShaperDrive (pd[index].convert.to_plain (value));
 				break;
 			case ParameterID::Tanh_Shaper_Offset:
-				open303Core.setTanhShaperOffset (parameterDescriptions[index].toNative (value));
+				open303Core.setTanhShaperOffset (pd[index].convert.to_plain (value));
 				break;
 			case ParameterID::Pre_Filter_Hpf:
-				open303Core.setPreFilterHighpass (parameterDescriptions[index].toNative (value));
+				open303Core.setPreFilterHighpass (pd[index].convert.to_plain (value));
 				break;
 			case ParameterID::Feedback_Hpf:
-				open303Core.setFeedbackHighpass (parameterDescriptions[index].toNative (value));
+				open303Core.setFeedbackHighpass (pd[index].convert.to_plain (value));
 				break;
 			case ParameterID::Post_Filter_Hpf:
-				open303Core.setPostFilterHighpass (parameterDescriptions[index].toNative (value));
+				open303Core.setPostFilterHighpass (pd[index].convert.to_plain (value));
 				break;
 			case ParameterID::Square_Phase_Shift:
-				open303Core.setSquarePhaseShift (parameterDescriptions[index].toNative (value));
+				open303Core.setSquarePhaseShift (pd[index].convert.to_plain (value));
 				break;
 #endif
 		}
@@ -372,13 +250,14 @@ struct Processor : AudioEffect
 			}
 			sampleCounter += data.numSamples;
 		});
-	
+
 		if (peak == static_cast<SampleType> (0.))
 		{
 			data.outputs[0].silenceFlags = 0x3;
 		}
 
-		peakUpdater.process (expToNormalized<ParamValue> (0.00001, 1., peak / data.numSamples), data);
+		peakUpdater.process (
+		    vst3utils::exp_to_normalized<ParamValue> (0.00001, 1., peak / data.numSamples), data);
 	}
 
 	tresult PLUGIN_API process (Steinberg::Vst::ProcessData& data) override
@@ -396,7 +275,6 @@ struct Processor : AudioEffect
 
 		return kResultTrue;
 	}
-
 };
 
 //------------------------------------------------------------------------
