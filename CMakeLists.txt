@@ -111,6 +111,11 @@ if(SMTG_ENABLE_VSTGUI_SUPPORT)
             "Resource/LED.png"
             "Resource/LED_2.0x.png"
     )
+	smtg_target_add_plugin_snapshots(Open303
+		RESOURCES
+			"Resource/C81FEB9C94F14346A9A7A84D91E4E5FE_snapshot.png"
+			"Resource/C81FEB9C94F14346A9A7A84D91E4E5FE_snapshot_2.0x.png"
+	)
 endif()
 
 if(SMTG_MAC)

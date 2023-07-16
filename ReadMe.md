@@ -1,5 +1,7 @@
 # VST3 port of Open303
 
+![Open303 Screenshot](Resource/C81FEB9C94F14346A9A7A84D91E4E5FE_snapshot.png)
+
 ## How to build
 
 ### You need:
