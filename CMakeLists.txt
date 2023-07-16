@@ -4,24 +4,24 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET 10.14 CACHE STRING "")
 
 project(open303 VERSION 1.0.0)
 
-set(vst3sdk_PATH "../../vst3sdk" CACHE PATH "Path to the VST SDK")
-set(vst3utils_PATH "../../vst3utils" CACHE PATH "Path to vst3utils")
+set(vst3sdk_PATH "../vst3sdk" CACHE PATH "Path to the VST SDK")
+set(vst3utils_PATH "../vst3utils" CACHE PATH "Path to vst3utils")
 
-if(NOT vst3sdk_PATH OR NOT EXISTS "${PROJECT_BINARY_DIR}/${vst3sdk_PATH}")
+if(NOT vst3sdk_PATH)
     message(FATAL_ERROR "You need to provide the path to the VST3 SDK via the variable vst3sdk_PATH !")
 endif()
 if(NOT vst3utils_PATH)
     message(FATAL_ERROR "You need to provide the path to vst3utils via the variable vst3utils_PATH !")
 endif()
 
-add_subdirectory("${PROJECT_BINARY_DIR}/${vst3sdk_PATH}" ${PROJECT_BINARY_DIR}/vst3sdk)
 set(SMTG_ENABLE_VST3_HOSTING_EXAMPLES 0)
 set(SMTG_ENABLE_VST3_PLUGIN_EXAMPLES 0)
 set(SMTG_CXX_STANDARD 17)
 
+add_subdirectory("${vst3sdk_PATH}" ${PROJECT_BINARY_DIR}/vst3sdk)
 smtg_enable_vst3_sdk()
 
-add_subdirectory("${PROJECT_BINARY_DIR}/${vst3utils_PATH}" ${PROJECT_BINARY_DIR}/vst3utils)
+add_subdirectory("${vst3utils_PATH}" ${PROJECT_BINARY_DIR}/vst3utils)
 
 add_library(libopen303
      Source/DSPCode/GlobalDefinitions.h
