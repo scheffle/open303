@@ -15,7 +15,7 @@ namespace o303 {
 
 using Steinberg::Vst::ParamID;
 
-#define O303_EXTENDED_PARAMETERS
+// #define O303_EXTENDED_PARAMETERS
 
 //------------------------------------------------------------------------
 enum class ParameterID
