@@ -4,10 +4,10 @@
 
 ### You need:
 
-    * cmake
-    * VST SDK (minimum version 3.7.8)
-    * [vst3utils](https://github.com/scheffle/vst3utils)
-    * compiler with c++17 support
+- cmake
+- VST SDK (minimum version 3.7.8)
+- [vst3utils](https://github.com/scheffle/vst3utils)
+- compiler with c++17 support
 
 ### Build:
 
