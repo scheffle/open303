@@ -15,6 +15,10 @@ if(NOT vst3utils_PATH)
 endif()
 
 add_subdirectory("${PROJECT_BINARY_DIR}/${vst3sdk_PATH}" ${PROJECT_BINARY_DIR}/vst3sdk)
+set(SMTG_ENABLE_VST3_HOSTING_EXAMPLES 0)
+set(SMTG_ENABLE_VST3_PLUGIN_EXAMPLES 0)
+set(SMTG_CXX_STANDARD 17)
+
 smtg_enable_vst3_sdk()
 
 add_subdirectory("${PROJECT_BINARY_DIR}/${vst3utils_PATH}" ${PROJECT_BINARY_DIR}/vst3utils)
