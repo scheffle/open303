@@ -6,6 +6,7 @@
 #include "vst3utils/parameter_updater.h"
 #include "public.sdk/source/vst/utility/audiobuffers.h"
 #include "public.sdk/source/vst/utility/processdataslicer.h"
+#include "public.sdk/source/vst/utility/rttransfer.h"
 #include "public.sdk/source/vst/utility/sampleaccurate.h"
 #include "public.sdk/source/vst/vstaudioeffect.h"
 #include "pluginterfaces/vst/ivstparameterchanges.h"
@@ -24,7 +25,9 @@ using vst3utils::end;
 //------------------------------------------------------------------------
 struct Processor : AudioEffect
 {
+	using RTTransfer = RTTransferT<Parameters>;
 	Parameters parameter;
+	RTTransfer paramTransfer;
 	rosic::Open303 open303Core;
 	ParameterUpdater peakUpdater {asIndex (ParameterID::AudioPeak)};
 	const vst3utils::param::convert_func* decayValueFunc = &decayParamValueFunc.to_plain;
@@ -85,7 +88,7 @@ struct Processor : AudioEffect
 	{
 		if (auto params = loadParameterState (state))
 		{
-			parameter = *params;
+			paramTransfer.transferObject_ui (std::make_unique<Parameters> (std::move (*params)));
 			return kResultTrue;
 		}
 		return kInternalError;
@@ -262,6 +265,12 @@ struct Processor : AudioEffect
 
 	tresult PLUGIN_API process (Steinberg::Vst::ProcessData& data) override
 	{
+		paramTransfer.accessTransferObject_rt ([this] (auto& param) {
+			for (auto index = 0u; index < param.size () && index < parameter.size (); ++index)
+			{
+				parameter[index].set(param[index].get ());
+			}
+		});
 		if (data.inputParameterChanges)
 			handleParameterChanges (data.inputParameterChanges);
 
