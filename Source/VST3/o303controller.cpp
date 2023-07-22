@@ -120,6 +120,11 @@ struct Controller : U::Extends<EditControllerEx1, U::Directly<IMidiMapping>>
 
 	using Parameter = vst3utils::parameter;
 
+	Parameter* getParameter (ParameterID pid) const
+	{
+		return static_cast<Parameter*> (parameters.getParameterByIndex (asIndex (pid)));
+	}
+
 	tresult PLUGIN_API initialize (FUnknown* context) override
 	{
 		auto result = EditControllerEx1::initialize (context);
@@ -132,27 +137,23 @@ struct Controller : U::Extends<EditControllerEx1, U::Directly<IMidiMapping>>
 			parameters.addParameter (param);
 		}
 
-		if (auto param = static_cast<Parameter*> (
-		        parameters.getParameterByIndex (asIndex (ParameterID::AudioPeak))))
+		if (auto param = getParameter (ParameterID::AudioPeak))
 		{
 			param->getInfo ().flags = ParameterInfo::kIsReadOnly;
 		}
 
-		if (auto param = static_cast<Parameter*> (
-		        parameters.getParameterByIndex (asIndex (ParameterID::DecayMode))))
+		if (auto param = getParameter (ParameterID::DecayMode))
 		{
 			auto listener = [this] (Parameter&, ParamValue value) {
-				if (auto param = static_cast<Parameter*> (
-				        parameters.getParameterByIndex (asIndex (ParameterID::Decay))))
+				if (auto param = getParameter (ParameterID::Decay))
 				{
 					if (value < 0.5)
 					{
 						param->set_custom_to_normalized_func ([] (const auto&, auto v) {
 							return decayParamValueFunc.to_normalized (v);
 						});
-						param->set_custom_to_plain_func ([] (const auto&, auto v) {
-							return decayParamValueFunc.to_plain (v);
-						});
+						param->set_custom_to_plain_func (
+						    [] (const auto&, auto v) { return decayParamValueFunc.to_plain (v); });
 					}
 					else
 					{
