@@ -3,6 +3,7 @@
 #include "public.sdk/source/vst/vsteditcontroller.cpp"
 #include "public.sdk/source/vst/vsthelpers.h"
 #include "base/source/fstreamer.h"
+#include "pluginterfaces/base/funknownimpl.h"
 #include "pluginterfaces/vst/ivstmidicontrollers.h"
 
 #ifdef SMTG_ENABLE_VSTGUI_SUPPORT
@@ -113,16 +114,9 @@ const std::vector<double> EditorDelegate::zoomFactors = {0.75, 1.0, 1.25, 1.50, 
 #endif
 
 //------------------------------------------------------------------------
-struct Controller : EditControllerEx1, IMidiMapping
+struct Controller : U::Extends<EditControllerEx1, U::Directly<IMidiMapping>>
 {
 	std::unique_ptr<EditorDelegate> editorDelegate {std::make_unique<EditorDelegate> ()};
-
-	//---Interface---------
-	OBJ_METHODS (EditControllerEx1, EditControllerEx1)
-	DEFINE_INTERFACES
-		DEF_INTERFACE (IMidiMapping)
-	END_DEFINE_INTERFACES (EditControllerEx1)
-	REFCOUNT_METHODS (EditControllerEx1)
 
 	using Parameter = vst3utils::parameter;
 
