@@ -60,7 +60,7 @@ struct Processor : AudioEffect
 	tresult PLUGIN_API setActive (TBool state) override { return AudioEffect::setActive (state); }
 
 	tresult PLUGIN_API setBusArrangements (SpeakerArrangement* inputs, int32 numIns,
-	                                       SpeakerArrangement* outputs, int32 numOuts) override
+										   SpeakerArrangement* outputs, int32 numOuts) override
 	{
 		if (numIns != numOuts || numIns != 1)
 			return kResultFalse;
@@ -138,7 +138,9 @@ struct Processor : AudioEffect
 			case ParameterID::Envmod:
 				open303Core.setEnvMod (pd[index].convert.to_plain (value));
 				break;
-			case ParameterID::Decay: open303Core.setDecay ((*decayValueFunc) (value)); break;
+			case ParameterID::Decay:
+				open303Core.setDecay ((*decayValueFunc) (value));
+				break;
 			case ParameterID::Accent:
 				open303Core.setAccent (pd[index].convert.to_plain (value));
 				break;
@@ -151,12 +153,13 @@ struct Processor : AudioEffect
 			case ParameterID::PitchBend:
 				open303Core.setPitchBend (pd[index].convert.to_plain (value));
 				break;
-			case ParameterID::AudioPeak: break;
+			case ParameterID::AudioPeak:
+				break;
 			case ParameterID::DecayMode:
-				decayValueFunc = value < 0.5 ? &decayParamValueFunc.to_plain :
-				                               &decayAltParamValueFunc.to_plain;
+				decayValueFunc =
+					value < 0.5 ? &decayParamValueFunc.to_plain : &decayAltParamValueFunc.to_plain;
 				updateParameter (asIndex (ParameterID::Decay),
-				                 parameter[asIndex (ParameterID::Decay)]);
+								 parameter[asIndex (ParameterID::Decay)]);
 				break;
 #ifdef O303_EXTENDED_PARAMETERS
 			case ParameterID::Amp_Sustain:
@@ -202,11 +205,11 @@ struct Processor : AudioEffect
 			open303Core.noteOn (event.noteOff.pitch, 0);
 	}
 
-	template <SymbolicSampleSizes SampleSize>
+	template<SymbolicSampleSizes SampleSize>
 	void processSliced (Steinberg::Vst::ProcessData& data)
 	{
 		using SampleType =
-		    std::conditional_t<SampleSize == SymbolicSampleSizes::kSample32, float, double>;
+			std::conditional_t<SampleSize == SymbolicSampleSizes::kSample32, float, double>;
 
 		static constexpr auto SampleAccuracy = 4;
 
@@ -260,7 +263,7 @@ struct Processor : AudioEffect
 		}
 
 		peakUpdater.process (
-		    vst3utils::exp_to_normalized<ParamValue> (0.00001, 1., peak / data.numSamples), data);
+			vst3utils::exp_to_normalized<ParamValue> (0.00001, 1., peak / data.numSamples), data);
 	}
 
 	tresult PLUGIN_API process (Steinberg::Vst::ProcessData& data) override
@@ -268,7 +271,7 @@ struct Processor : AudioEffect
 		paramTransfer.accessTransferObject_rt ([this] (auto& param) {
 			for (auto index = 0u; index < param.size () && index < parameter.size (); ++index)
 			{
-				parameter[index].set(param[index].get ());
+				parameter[index].set (param[index].get ());
 			}
 		});
 		if (data.inputParameterChanges)

@@ -17,17 +17,18 @@
 #define BUILD_NUMBER_INT 0
 
 // Version with build number (example "1.0.3.342")
-#define FULL_VERSION_STR MAJOR_VERSION_STR "." SUB_VERSION_STR "." RELEASE_NUMBER_STR "." BUILD_NUMBER_STR
+#define FULL_VERSION_STR                                                                           \
+	MAJOR_VERSION_STR "." SUB_VERSION_STR "." RELEASE_NUMBER_STR "." BUILD_NUMBER_STR
 
 // Version without build number (example "1.0.3")
 #define VERSION_STR MAJOR_VERSION_STR "." SUB_VERSION_STR "." RELEASE_NUMBER_STR
 
-#define stringOriginalFilename	"O303.vst3"
+#define stringOriginalFilename "O303.vst3"
 #if SMTG_PLATFORM_64
-#define stringFileDescription	"O303 VST3 (64Bit)"
+#define stringFileDescription "O303 VST3 (64Bit)"
 #else
-#define stringFileDescription	"O303 VST3"
+#define stringFileDescription "O303 VST3"
 #endif
-#define stringCompanyName		"AS"
-#define stringLegalCopyright	"Copyright(c) 2022."
-#define stringLegalTrademarks	"VST is a trademark of Steinberg Media Technologies GmbH"
+#define stringCompanyName "AS"
+#define stringLegalCopyright "Copyright(c) 2022."
+#define stringLegalTrademarks "VST is a trademark of Steinberg Media Technologies GmbH"

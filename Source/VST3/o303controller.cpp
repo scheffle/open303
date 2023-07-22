@@ -44,7 +44,7 @@ struct EditorDelegate
 	void onZoomChanged (VST3Editor* editor, double newZoom) override { uiZoom = newZoom; }
 
 	CView* verifyView (CView* view, const UIAttributes& attributes,
-	                   const IUIDescription* description, VST3Editor* editor) override
+					   const IUIDescription* description, VST3Editor* editor) override
 	{
 		if (auto customViewName = attributes.getAttributeValue (IUIDescription::kCustomViewName))
 		{
@@ -153,7 +153,7 @@ struct Controller : U::Extends<EditControllerEx1, U::Directly<IMidiMapping>>
 							return decayParamValueFunc.to_normalized (v);
 						});
 						param->set_custom_to_plain_func (
-						    [] (const auto&, auto v) { return decayParamValueFunc.to_plain (v); });
+							[] (const auto&, auto v) { return decayParamValueFunc.to_plain (v); });
 					}
 					else
 					{
@@ -215,8 +215,8 @@ struct Controller : U::Extends<EditControllerEx1, U::Directly<IMidiMapping>>
 	}
 
 	tresult PLUGIN_API getMidiControllerAssignment (int32 busIndex, int16 channel,
-	                                                CtrlNumber midiControllerNumber,
-	                                                ParamID& id) override
+													CtrlNumber midiControllerNumber,
+													ParamID& id) override
 	{
 		if (busIndex != 0 || channel != 0)
 			return kInvalidArgument;

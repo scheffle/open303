@@ -19,29 +19,15 @@ FUnknown* createController (void*);
 } // o303
 
 //------------------------------------------------------------------------
-BEGIN_FACTORY_DEF ("AS", "http://", "email:", 2)
+BEGIN_FACTORY_DEF ("AS", "", "", 2)
 
 //------------------------------------------------------------------------
-DEF_CLASS  (o303::ProcessorUID,
-			PClassInfo::kManyInstances,
-			kVstAudioEffectClass,
-			"Open303",
-			Vst::kDistributable,
-			Vst::PlugType::kInstrument,
-			"1.0.0",
-			kVstVersionString,
-			o303::createProcessor, nullptr)
+DEF_CLASS (o303::ProcessorUID, PClassInfo::kManyInstances, kVstAudioEffectClass, "Open303",
+		   Vst::kDistributable, Vst::PlugType::kInstrument, "1.0.0", kVstVersionString,
+		   o303::createProcessor, nullptr)
 
-DEF_CLASS  (o303::ControllerUID,
-			PClassInfo::kManyInstances,
-			kVstComponentControllerClass,
-			"Open303",
-			Vst::kDistributable,
-			"",
-			"1.0.0",
-			kVstVersionString,
-			o303::createController, nullptr)
+DEF_CLASS (o303::ControllerUID, PClassInfo::kManyInstances, kVstComponentControllerClass, "Open303",
+		   Vst::kDistributable, "", "1.0.0", kVstVersionString, o303::createController, nullptr)
 
 //------------------------------------------------------------------------
 END_FACTORY
-
