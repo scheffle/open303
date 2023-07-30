@@ -332,7 +332,7 @@ namespace rosic
       {
         if( note->gate == true && currentNote != -1)
         {
-          int key = note->key + 12*note->octave + currentNote;
+          int key = note->playKey + 12*note->octave + currentNote;
           key = clip(key, 0, 127);
 
           if( !slideToNextNote )

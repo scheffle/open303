@@ -19,6 +19,7 @@ namespace rosic
   public:
 
     int  key;
+    int  playKey;
     int  octave;
     bool accent;
     bool slide;
@@ -27,6 +28,7 @@ namespace rosic
     AcidNote()
     {
       key    = 0;
+      playKey = 0;
       octave = 0;
       accent = false;
       slide  = false;

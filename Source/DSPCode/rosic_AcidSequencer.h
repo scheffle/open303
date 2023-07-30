@@ -129,7 +129,7 @@ namespace rosic
     INLINE AcidNote* getNextScheduledNote() 
     { 
       AcidNote* note = patterns[activePattern].getNote(step);
-      note->key      = getClosestPermissibleKey(note->key); 
+      note->playKey  = getClosestPermissibleKey(note->key); 
       return note;
     }
 
@@ -149,6 +149,8 @@ namespace rosic
 
     //---------------------------------------------------------------------------------------------
     // others:
+
+	int getCurrentPlayingStep () const { return step; }
 
     //=============================================================================================
 
@@ -205,7 +207,7 @@ namespace rosic
       }
 
       AcidNote* note = patterns[activePattern].getNote(step);
-      note->key      = getClosestPermissibleKey(note->key);
+      note->playKey  = getClosestPermissibleKey(note->key);
       step           = (step+1) % patterns[activePattern].getNumSteps();
       return note; 
     }
