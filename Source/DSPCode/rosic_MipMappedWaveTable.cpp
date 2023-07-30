@@ -193,7 +193,7 @@ void MipMappedWaveTable::generateMipMap()
 
 void MipMappedWaveTable::fillWithSine()
 {
-  for (long i=0; i<tableLength; i++)
+  for (int i=0; i<tableLength; i++)
     prototypeTable[i] = sin( (2.0*PI*i) / (double) (tableLength) );
   generateMipMap();
 }

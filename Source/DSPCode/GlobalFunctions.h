@@ -402,7 +402,7 @@ INLINE double radiantToDegree(double radiant)
 
 INLINE double randomUniform(double min, double max, int seed)
 {
-  static unsigned long state = 0;
+  static unsigned int state = 0;
   if( seed >= 0 )
     state = seed;                                        // initialization, if desired
   state = 1664525*state + 1013904223;                    // mod implicitely by integer overflow
