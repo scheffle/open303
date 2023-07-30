@@ -45,19 +45,24 @@ namespace rosic
     void setTempo(double newTempoInBpm) { bpm = newTempoInBpm; }
 
     /** Sets the key in one of the patterns for one of the steps (between 0...11, 0 is C). */
-    void setKey(int pattern, int step, int newKey);
+    void setKey(int pattern, int step, int newKey)
+    { patterns[pattern].setKey(step, newKey); }
 
     /** Sets the octave for one of the steps (0 is the root octave between C2...B2). */
-    void setOctave(int pattern, int step, int newOctave);
-
+    void setOctave(int pattern, int step, int newOctave)
+	{ patterns[pattern].setOctave(step, newOctave); }
+	
     /** Sets the accent flag for one of the steps. */
-    void setAccent(int pattern, int step, bool shouldBeAccented);
+    void setAccent(int pattern, int step, bool shouldBeAccented)
+	{ patterns[pattern].setAccent(step, shouldBeAccented); }
 
     /** Sets the slide flag for one of the steps. */
-    void setSlide(int pattern, int step, bool shouldHaveSlide);
+    void setSlide(int pattern, int step, bool shouldHaveSlide)
+	{ patterns[pattern].setSlide(step, shouldHaveSlide); }
 
     /** Sets the gate flag for one of the steps. */
-    void setGate(int pattern, int step, bool shouldBeOpen);
+    void setGate(int pattern, int step, bool shouldBeOpen)
+	{ patterns[pattern].setGate(step, shouldBeOpen); }
 
     /** Selects one of the modes for the sequencer @see sequencerModes. */
     void setMode(int newMode);
