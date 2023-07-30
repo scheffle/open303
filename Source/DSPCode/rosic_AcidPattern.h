@@ -62,6 +62,8 @@ namespace rosic
     is one 16th note). */
     void setStepLength(double newStepLength) { stepLength = newStepLength; }
 
+	void setNumSteps(int steps) { numSteps = steps; }
+
     /** Sets the key for one of the steps (between 0...12, where 0 and 12 is a C). */
     void setKey(int step, int newKey) { notes[step].key = newKey; }
 
