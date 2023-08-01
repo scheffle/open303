@@ -84,6 +84,9 @@ namespace rosic
     /** Toggles the permissibility of a key on/off. */
     void toggleKeyPermissibility(int key);
 
+	void setActivePattern(int index)
+	{ activePattern = std::clamp (index, 0, numPatterns - 1); }
+
     //---------------------------------------------------------------------------------------------
     // inquiry:
 
