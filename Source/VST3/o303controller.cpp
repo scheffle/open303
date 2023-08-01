@@ -1,5 +1,7 @@
 #include "o303pids.h"
 #include "vst3utils/parameter.h"
+#include "vst3utils/message.h"
+#include "../DSPCode/rosic_AcidPattern.h"
 #include "public.sdk/source/vst/vsteditcontroller.cpp"
 #include "public.sdk/source/vst/vsthelpers.h"
 #include "base/source/fstreamer.h"
@@ -8,6 +10,8 @@
 
 #ifdef SMTG_ENABLE_VSTGUI_SUPPORT
 #include "vstgui/lib/algorithm.h"
+#include "vstgui/lib/cclipboard.h"
+#include "vstgui/lib/cdropsource.h"
 #include "vstgui/lib/controls/coptionmenu.h"
 #include "vstgui/lib/controls/ioptionmenulistener.h"
 #include "vstgui/lib/iviewlistener.h"
@@ -16,6 +20,7 @@
 using namespace VSTGUI;
 #endif
 
+#include <unordered_map>
 #include <string_view>
 
 //------------------------------------------------------------------------
@@ -116,13 +121,16 @@ const std::vector<double> EditorDelegate::zoomFactors = {0.75, 1.0, 1.25, 1.50, 
 //------------------------------------------------------------------------
 struct Controller : U::Extends<EditControllerEx1, U::Directly<IMidiMapping>>
 {
+	std::unordered_map<CtrlNumber, ParameterID> midiCtrlerMap;
+	std::unordered_map<ParamID, std::unique_ptr<vst3utils::parameter>> uiParams;
 	std::unique_ptr<EditorDelegate> editorDelegate {std::make_unique<EditorDelegate> ()};
 
 	using Parameter = vst3utils::parameter;
 
-	Parameter* getParameter (ParameterID pid) const
+	template<typename T>
+	Parameter* getParameter (T pid, size_t offset = 0) const
 	{
-		return static_cast<Parameter*> (parameters.getParameterByIndex (asIndex (pid)));
+		return static_cast<Parameter*> (parameters.getParameter (asIndex (pid) + offset));
 	}
 
 	tresult PLUGIN_API initialize (FUnknown* context) override
@@ -144,7 +152,7 @@ struct Controller : U::Extends<EditControllerEx1, U::Directly<IMidiMapping>>
 
 		if (auto param = getParameter (ParameterID::DecayMode))
 		{
-			auto listener = [this] (Parameter&, ParamValue value) {
+			auto listener = [this] (Parameter& p, ParamValue value) {
 				if (auto param = getParameter (ParameterID::Decay))
 				{
 					if (value < 0.5)
@@ -165,18 +173,255 @@ struct Controller : U::Extends<EditControllerEx1, U::Directly<IMidiMapping>>
 						});
 					}
 					param->changed ();
-					if (auto handler = getComponentHandler ())
-						handler->restartComponent (kParamValuesChanged);
 				}
 			};
 			param->add_listener (listener);
 			listener (*param, 0.);
 		}
+		if (auto param = getParameter (ParameterID::SeqActivePattern))
+		{
+			param->add_listener ([this] (auto& param, auto v) {
+				vst3utils::message msg (Steinberg::owned (allocateMessage ()));
+				msg.set_id (msgIDPattern.data ());
+				msg.get_attributes ().set<int> (attrIDPatternIndex,
+												param.toPlain (v) - param.toPlain (0.));
+				peerConnection->notify (msg);
+			});
+		}
+
+		midiCtrlerMap = {
+			{ControllerNumbers::kCtrlVolume,			 ParameterID::Volume	},
+			{ControllerNumbers::kCtrlFilterCutoff,	   ParameterID::Cutoff	  },
+			{ControllerNumbers::kCtrlFilterResonance, ParameterID::Resonance},
+			{ControllerNumbers::kCtrlGPC6,			   ParameterID::Envmod	  },
+			{ControllerNumbers::kPitchBend,			ParameterID::PitchBend},
+		};
+
+		if (auto param = getParameter (ParameterID::SeqPlayingStep))
+			param->getInfo ().flags = ParameterInfo::kIsReadOnly;
+
+		auto pid = asIndex (SeqPatternParameterID::NumSteps);
+		for (const auto& desc : seqParameterDescriptions)
+		{
+			auto param = new Parameter (pid, desc);
+			parameters.addParameter (param);
+			++pid;
+		}
+
+		enum UIParamID
+		{
+			Copy = 10000,
+			Paste,
+			Clear,
+			ShiftLeft,
+			ShiftRight,
+		};
+
+		static constexpr vst3utils::param::description copyParamDesc =
+			vst3utils::param::steps_description (u"Copy", 0, steps_functions<1> ());
+		static constexpr vst3utils::param::description pasteParamDesc =
+			vst3utils::param::steps_description (u"Paste", 0, steps_functions<1> ());
+		static constexpr vst3utils::param::description clearParamDesc =
+			vst3utils::param::steps_description (u"Clear", 0, steps_functions<1> ());
+		static constexpr vst3utils::param::description shiftLeftParamDesc =
+			vst3utils::param::steps_description (u"ShiftLeft", 0, steps_functions<1> ());
+		static constexpr vst3utils::param::description shiftRightParamDesc =
+			vst3utils::param::steps_description (u"ShiftRight", 0, steps_functions<1> ());
+		auto copyParam = std::make_unique<vst3utils::parameter> (UIParamID::Copy, copyParamDesc);
+		auto pasteParam = std::make_unique<vst3utils::parameter> (UIParamID::Paste, pasteParamDesc);
+		auto clearParam = std::make_unique<vst3utils::parameter> (UIParamID::Clear, clearParamDesc);
+		auto shiftLeftParam =
+			std::make_unique<vst3utils::parameter> (UIParamID::ShiftLeft, shiftLeftParamDesc);
+		auto shiftRightParam =
+			std::make_unique<vst3utils::parameter> (UIParamID::ShiftRight, shiftRightParamDesc);
+
+		copyParam->add_listener ([this] (auto&, auto value) {
+			if (value > 0.5)
+				performCopy ();
+		});
+		pasteParam->add_listener ([this] (auto&, auto value) {
+			if (value > 0.5)
+				performPaste ();
+		});
+		clearParam->add_listener ([this] (auto&, auto value) {
+			if (value > 0.5)
+				performClear ();
+		});
+		shiftLeftParam->add_listener ([this] (auto&, auto value) {
+			if (value > 0.5)
+				performShiftLeft ();
+		});
+		shiftRightParam->add_listener ([this] (auto&, auto value) {
+			if (value > 0.5)
+				performShiftRight ();
+		});
+
+		uiParams.emplace (UIParamID::Copy, std::move (copyParam));
+		uiParams.emplace (UIParamID::Paste, std::move (pasteParam));
+		uiParams.emplace (UIParamID::Clear, std::move (clearParam));
+		uiParams.emplace (UIParamID::ShiftLeft, std::move (shiftLeftParam));
+		uiParams.emplace (UIParamID::ShiftRight, std::move (shiftRightParam));
 
 		return kResultTrue;
 	}
 
+	PatternData makePatternData () const
+	{
+		PatternData data;
+		data.stepLength = getParameter (SeqPatternParameterID::StepLength)->getNormalized ();
+		data.numSteps = getParameter (SeqPatternParameterID::NumSteps)->getPlain ();
+		for (auto i = 0; i < 16; ++i)
+		{
+			data.note[i].key = getParameter (SeqPatternParameterID::Key0, i)->getPlain ();
+			data.note[i].octave = getParameter (SeqPatternParameterID::Octave0, i)->getPlain ();
+			data.note[i].accent = getParameter (SeqPatternParameterID::Accent0, i)->getPlain ();
+			data.note[i].slide = getParameter (SeqPatternParameterID::Slide0, i)->getPlain ();
+			data.note[i].gate = getParameter (SeqPatternParameterID::Gate0, i)->getPlain ();
+		}
+		return data;
+	}
+
+	void performEditOfCurrentValue (const Parameter& param)
+	{
+		beginEdit (param.getInfo ().id);
+		performEdit (param.getInfo ().id, param.getNormalized ());
+		endEdit (param.getInfo ().id);
+	}
+
+	void applyPatternData (const PatternData& data, bool performEdit = true)
+	{
+		startGroupEdit ();
+		if (auto p = getParameter (SeqPatternParameterID::StepLength))
+		{
+			p->setNormalized (data.stepLength);
+			if (performEdit)
+				performEditOfCurrentValue (*p);
+		}
+		if (auto p = getParameter (SeqPatternParameterID::NumSteps))
+		{
+			p->setPlain (data.numSteps);
+			if (performEdit)
+				performEditOfCurrentValue (*p);
+		}
+		for (auto i = 0; i < 16; ++i)
+		{
+			if (auto p = getParameter (SeqPatternParameterID::Key0, i))
+			{
+				p->setPlain (data.note[i].key);
+				if (performEdit)
+					performEditOfCurrentValue (*p);
+			}
+			if (auto p = getParameter (SeqPatternParameterID::Octave0, i))
+			{
+				p->setPlain (data.note[i].octave);
+				if (performEdit)
+					performEditOfCurrentValue (*p);
+			}
+			if (auto p = getParameter (SeqPatternParameterID::Accent0, i))
+			{
+				p->setPlain (data.note[i].accent);
+				if (performEdit)
+					performEditOfCurrentValue (*p);
+			}
+			if (auto p = getParameter (SeqPatternParameterID::Slide0, i))
+			{
+				p->setPlain (data.note[i].slide);
+				if (performEdit)
+					performEditOfCurrentValue (*p);
+			}
+			if (auto p = getParameter (SeqPatternParameterID::Gate0, i))
+			{
+				p->setPlain (data.note[i].gate);
+				if (performEdit)
+					performEditOfCurrentValue (*p);
+			}
+		}
+
+		finishGroupEdit ();
+	}
+
+	void performCopy ()
+	{
+#ifdef SMTG_ENABLE_VSTGUI_SUPPORT
+		auto data = makePatternData ();
+		auto clipboardData = CDropSource::create (&data, sizeof (data), CDropSource::Type::kBinary);
+		CClipboard::set (clipboardData);
+#endif
+	}
+
+	void performPaste ()
+	{
+#ifdef SMTG_ENABLE_VSTGUI_SUPPORT
+		if (auto data = VSTGUI::CClipboard::get ())
+		{
+			for (auto it = begin (data); it != end (data); ++it)
+			{
+				if ((*it).type == IDataPackage::Type::kBinary &&
+					(*it).dataSize == sizeof (PatternData))
+				{
+					auto patternData = reinterpret_cast<const PatternData*> ((*it).data);
+					applyPatternData (*patternData);
+					break;
+				}
+			}
+		}
+#endif
+	}
+
+	void performClear ()
+	{
+		PatternData data {};
+		applyPatternData (data);
+	}
+
+	void performShiftLeft ()
+	{
+		auto data = makePatternData ();
+		for (auto i = 1; i < 16; ++i)
+		{
+			std::swap (data.note[i - 1], data.note[i]);
+		}
+		applyPatternData (data);
+	}
+
+	void performShiftRight ()
+	{
+		auto data = makePatternData ();
+		for (auto i = 14; i >= 0; --i)
+		{
+			std::swap (data.note[i], data.note[i + 1]);
+		}
+		applyPatternData (data);
+	}
+
 	tresult PLUGIN_API terminate () override { return EditControllerEx1::terminate (); }
+
+	Steinberg::Vst::Parameter* getParameterObject (ParamID tag) override
+	{
+		if (auto param = EditControllerEx1::getParameterObject (tag))
+			return param;
+		auto it = uiParams.find (tag);
+		if (it != uiParams.end ())
+			return it->second.get ();
+		return nullptr;
+	}
+
+	tresult PLUGIN_API notify (IMessage* message) override
+	{
+		vst3utils::message msg (message);
+		if (msg.get_id () == msgIDPattern)
+		{
+			auto attributes = msg.get_attributes ();
+			if (!attributes.is_valid ())
+				return kInternalError;
+			if (auto v = attributes.get<PatternData> (msgIDPattern.data ()))
+			{
+				applyPatternData (*v, false);
+			}
+			return kResultTrue;
+		}
+		return kResultFalse;
+	}
 
 	tresult PLUGIN_API setComponentState (IBStream* state) override
 	{
@@ -187,6 +432,31 @@ struct Controller : U::Extends<EditControllerEx1, U::Directly<IMidiMapping>>
 				if (auto param = parameters.getParameter (i))
 					param->setNormalized (params->at (i).get ());
 			}
+			if (auto param = getParameter (ParameterID::SeqActivePattern))
+				param->changed ();
+#if 0
+			rosic::AcidPattern pat;
+			if (loadAcidPattern (pat, state))
+			{
+				if (auto param = getParameter (SeqPatternParameterID::NumSteps))
+					param->setPlain (pat.getNumSteps ());
+				if (auto param = getParameter (SeqPatternParameterID::StepLength))
+					param->setNormalized (pat.getStepLength ());
+				for (auto step = 0u; step < pat.getMaxNumSteps (); ++step)
+				{
+					if (auto param = getParameter (SeqPatternParameterID::Key0, step))
+						param->setPlain (pat.getKey (step));
+					if (auto param = getParameter (SeqPatternParameterID::Octave0, step))
+						param->setPlain (pat.getOctave (step) + 2);
+					if (auto param = getParameter (SeqPatternParameterID::Accent0, step))
+						param->setPlain (pat.getAccent (step));
+					if (auto param = getParameter (SeqPatternParameterID::Slide0, step))
+						param->setPlain (pat.getSlide (step));
+					if (auto param = getParameter (SeqPatternParameterID::Gate0, step))
+						param->setPlain (pat.getGate (step));
+				}
+			}
+#endif
 			return kResultTrue;
 		}
 		return kInternalError;
@@ -220,33 +490,11 @@ struct Controller : U::Extends<EditControllerEx1, U::Directly<IMidiMapping>>
 	{
 		if (busIndex != 0 || channel != 0)
 			return kInvalidArgument;
-		switch (midiControllerNumber)
+		auto it = midiCtrlerMap.find (midiControllerNumber);
+		if (it != midiCtrlerMap.end ())
 		{
-			case ControllerNumbers::kCtrlVolume:
-			{
-				id = asIndex (ParameterID::Volume);
-				return kResultTrue;
-			}
-			case ControllerNumbers::kCtrlFilterCutoff:
-			{
-				id = asIndex (ParameterID::Cutoff);
-				return kResultTrue;
-			}
-			case ControllerNumbers::kCtrlFilterResonance:
-			{
-				id = asIndex (ParameterID::Resonance);
-				return kResultTrue;
-			}
-			case ControllerNumbers::kCtrlGPC6:
-			{
-				id = asIndex (ParameterID::Envmod);
-				return kResultTrue;
-			}
-			case ControllerNumbers::kPitchBend:
-			{
-				id = asIndex (ParameterID::PitchBend);
-				return kResultTrue;
-			}
+			id = asIndex (it->second);
+			return kResultTrue;
 		}
 		return kResultFalse;
 	}
@@ -286,6 +534,9 @@ std::optional<Parameters> loadParameterState (Steinberg::IBStream* stream)
 	int32 version;
 	if (!s.readInt32 (version) || version > stateVersion) // future build?
 		return {};
+	uint32 numParameters;
+	if (!s.readInt32u (numParameters) || numParameters == 0)
+		return {};
 	Parameters result;
 	for (auto& p : result)
 	{
@@ -293,6 +544,8 @@ std::optional<Parameters> loadParameterState (Steinberg::IBStream* stream)
 		if (!s.readDouble (value))
 			return {};
 		p.set (value);
+		if (--numParameters == 0)
+			break;
 	}
 	return {result};
 }
@@ -303,9 +556,78 @@ bool saveParameterState (const Parameters& parameter, Steinberg::IBStream* strea
 	IBStreamer s (stream, kLittleEndian);
 	s.writeInt32 (stateID);
 	s.writeInt32 (stateVersion);
+	s.writeInt32u (static_cast<uint32_t> (parameter.size ()));
 	for (const auto& p : parameter)
 	{
 		s.writeDouble (p.get ());
+	}
+	return true;
+}
+
+static constexpr int32 patStateID = 'patt';
+static constexpr int32 patStateVersion = 1;
+
+//------------------------------------------------------------------------
+bool loadAcidPattern (rosic::AcidPattern& pattern, Steinberg::IBStream* stream)
+{
+	IBStreamer s (stream, kLittleEndian);
+	int32 id;
+	if (!s.readInt32 (id) || id != patStateID)
+		return false;
+	int32 version;
+	if (!s.readInt32 (version) || version > patStateVersion) // future build?
+		return false;
+
+	double stepLength {};
+	if (!s.readDouble (stepLength))
+		return false;
+	pattern.setStepLength (stepLength);
+	int32 numSteps {};
+	if (!s.readInt32 (numSteps) || numSteps != pattern.getMaxNumSteps ())
+		return false;
+	if (!s.readInt32 (numSteps))
+		return false;
+	pattern.setNumSteps (numSteps);
+	for (auto step = 0; step < pattern.getMaxNumSteps (); ++step)
+	{
+		int32 iv {};
+		if (!s.readInt32 (iv))
+			return false;
+		pattern.setKey (step, iv);
+		if (!s.readInt32 (iv))
+			return false;
+		pattern.setOctave (step, iv);
+		bool bv {};
+		if (!s.readBool (bv))
+			return false;
+		pattern.setAccent (step, bv);
+		if (!s.readBool (bv))
+			return false;
+		pattern.setSlide (step, bv);
+		if (!s.readBool (bv))
+			return false;
+		pattern.setGate (step, bv);
+	}
+
+	return true;
+}
+
+//------------------------------------------------------------------------
+bool saveAcidPattern (const rosic::AcidPattern& pattern, Steinberg::IBStream* stream)
+{
+	IBStreamer s (stream, kLittleEndian);
+	s.writeInt32 (patStateID);
+	s.writeInt32 (patStateVersion);
+	s.writeDouble (pattern.getStepLength ());
+	s.writeInt32 (pattern.getMaxNumSteps ());
+	s.writeInt32 (pattern.getNumSteps ());
+	for (auto step = 0; step < pattern.getMaxNumSteps (); ++step)
+	{
+		s.writeInt32 (pattern.getKey (step));
+		s.writeInt32 (pattern.getOctave (step));
+		s.writeBool (pattern.getAccent (step));
+		s.writeBool (pattern.getSlide (step));
+		s.writeBool (pattern.getGate (step));
 	}
 	return true;
 }

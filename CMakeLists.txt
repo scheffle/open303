@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.14.0 FATAL_ERROR)
 
 set(CMAKE_OSX_DEPLOYMENT_TARGET 10.14 CACHE STRING "")
 
-project(open303 VERSION 1.0.0)
+project(open303 VERSION 2.0.0)
 
 set(vst3sdk_PATH "../vst3sdk" CACHE PATH "Path to the VST SDK")
 set(vst3utils_PATH "../vst3utils" CACHE PATH "Path to vst3utils")
