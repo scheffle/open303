@@ -159,6 +159,8 @@ namespace rosic
 
     //=============================================================================================
 
+    static constexpr const int numPatterns = 16;
+
   protected:
 
     static const int numPatterns = 16;
