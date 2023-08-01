@@ -90,6 +90,8 @@ namespace rosic
     //---------------------------------------------------------------------------------------------
     // inquiry:
 
+	int getActivePattern () const { return activePattern; }
+
     /** Returns the number of patterns. */
     int getNumPatterns() const { return numPatterns; }
 
