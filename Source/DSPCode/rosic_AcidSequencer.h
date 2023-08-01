@@ -155,7 +155,7 @@ namespace rosic
     //---------------------------------------------------------------------------------------------
     // others:
 
-	int getCurrentPlayingStep () const { return step; }
+	int getCurrentPlayingStep () const { return currentStep; }
 
     //=============================================================================================
 
@@ -163,7 +163,6 @@ namespace rosic
 
   protected:
 
-    static const int numPatterns = 16;
     AcidPattern patterns[numPatterns];
 
     int    activePattern;      // the currently selected pattern
@@ -172,7 +171,8 @@ namespace rosic
     double sampleRate;         // the sample-rate
     double bpm;                // the tempo in bpm
     int    countDown;          // a sample-countdown - counts down for the next step to occur
-    int    step;               // the current step
+    int    step;               // the next step
+    int    currentStep;        // currently playing step
     int    sequencerMode;      // the selected mode for the sequencer
     double driftError;         // to keep track and compensate for accumulating timing error
     bool   keyPermissible[13]; // array of flags to indicate if a particular key is permissible
@@ -215,6 +215,7 @@ namespace rosic
 
       AcidNote* note = patterns[activePattern].getNote(step);
       note->playKey  = getClosestPermissibleKey(note->key);
+      currentStep    = step;
       step           = (step+1) % patterns[activePattern].getNumSteps();
       return note; 
     }

@@ -12,6 +12,7 @@ AcidSequencer::AcidSequencer()
   running       = false;
   countDown     = 0;
   step          = 0;
+  currentStep   = 0;
   sequencerMode = OFF;
   driftError    = 0.0;
   modeChanged   = false;
