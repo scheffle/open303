@@ -116,21 +116,21 @@ static constexpr std::array<vst3utils::param::description, Parameters::count ()>
 		 }
 };
 
-static const constexpr std::string_view msgIDPattern = "Pattern";
+static const constexpr auto msgIDPattern = "Pattern";
 static const constexpr auto attrIDPatternIndex = "PatternIndex";
 
 struct PatternData
 {
 	struct Note
 	{
-		int16_t key {0};
-		int8_t octave {0};
-		int8_t accent {0};
-		int8_t slide {0};
-		int8_t gate {0};
+		int16_t key;
+		int8_t octave;
+		int8_t accent;
+		int8_t slide;
+		int8_t gate;
 	};
-	double stepLength {0.5};
-	int32_t numSteps {15};
+	double stepLength;
+	int32_t numSteps;
 	Note note[16];
 };
 

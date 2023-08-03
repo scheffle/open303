@@ -130,7 +130,8 @@ struct Controller : U::Extends<EditControllerEx1, U::Directly<IMidiMapping>>
 	template<typename T>
 	Parameter* getParameter (T pid, size_t offset = 0) const
 	{
-		return static_cast<Parameter*> (parameters.getParameter (asIndex (pid) + offset));
+		return static_cast<Parameter*> (
+			parameters.getParameter (static_cast<uint32> (asIndex (pid) + offset)));
 	}
 
 	tresult PLUGIN_API initialize (FUnknown* context) override
@@ -182,7 +183,7 @@ struct Controller : U::Extends<EditControllerEx1, U::Directly<IMidiMapping>>
 		{
 			param->add_listener ([this] (auto& param, auto v) {
 				vst3utils::message msg (Steinberg::owned (allocateMessage ()));
-				msg.set_id (msgIDPattern.data ());
+				msg.set_id (msgIDPattern);
 				msg.get_attributes ().set<int> (attrIDPatternIndex,
 												param.toPlain (v) - param.toPlain (0.));
 				peerConnection->notify (msg);
@@ -267,7 +268,7 @@ struct Controller : U::Extends<EditControllerEx1, U::Directly<IMidiMapping>>
 
 	PatternData makePatternData () const
 	{
-		PatternData data;
+		PatternData data {};
 		data.stepLength = getParameter (SeqPatternParameterID::StepLength)->getNormalized ();
 		data.numSteps = getParameter (SeqPatternParameterID::NumSteps)->getPlain ();
 		for (auto i = 0; i < 16; ++i)
@@ -414,9 +415,9 @@ struct Controller : U::Extends<EditControllerEx1, U::Directly<IMidiMapping>>
 			auto attributes = msg.get_attributes ();
 			if (!attributes.is_valid ())
 				return kInternalError;
-			if (auto v = attributes.get<PatternData> (msgIDPattern.data ()))
+			if (auto v = attributes.get<PatternData, 1> (msgIDPattern))
 			{
-				applyPatternData (*v, false);
+				applyPatternData (*v->data, false);
 			}
 			return kResultTrue;
 		}
@@ -434,29 +435,6 @@ struct Controller : U::Extends<EditControllerEx1, U::Directly<IMidiMapping>>
 			}
 			if (auto param = getParameter (ParameterID::SeqActivePattern))
 				param->changed ();
-#if 0
-			rosic::AcidPattern pat;
-			if (loadAcidPattern (pat, state))
-			{
-				if (auto param = getParameter (SeqPatternParameterID::NumSteps))
-					param->setPlain (pat.getNumSteps ());
-				if (auto param = getParameter (SeqPatternParameterID::StepLength))
-					param->setNormalized (pat.getStepLength ());
-				for (auto step = 0u; step < pat.getMaxNumSteps (); ++step)
-				{
-					if (auto param = getParameter (SeqPatternParameterID::Key0, step))
-						param->setPlain (pat.getKey (step));
-					if (auto param = getParameter (SeqPatternParameterID::Octave0, step))
-						param->setPlain (pat.getOctave (step) + 2);
-					if (auto param = getParameter (SeqPatternParameterID::Accent0, step))
-						param->setPlain (pat.getAccent (step));
-					if (auto param = getParameter (SeqPatternParameterID::Slide0, step))
-						param->setPlain (pat.getSlide (step));
-					if (auto param = getParameter (SeqPatternParameterID::Gate0, step))
-						param->setPlain (pat.getGate (step));
-				}
-			}
-#endif
 			return kResultTrue;
 		}
 		return kInternalError;

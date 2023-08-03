@@ -160,11 +160,11 @@ struct Processor : AudioEffect
 		vst3utils::message msg (owned (allocateMessage ()));
 		if (!msg.is_valid ())
 			return;
-		msg.set_id (msgIDPattern.data ());
+		msg.set_id (msgIDPattern);
 		auto attributes = msg.get_attributes ();
 		if (!attributes.is_valid ())
 			return;
-		PatternData data;
+		PatternData data {};
 		data.stepLength = pattern->getStepLength ();
 		data.numSteps = pattern->getNumSteps ();
 		for (auto step = 0; step < 16; ++step)
@@ -175,7 +175,7 @@ struct Processor : AudioEffect
 			data.note[step].slide = pattern->getSlide (step);
 			data.note[step].gate = pattern->getGate (step);
 		}
-		attributes.set (msgIDPattern.data (), data);
+		attributes.set (msgIDPattern, data);
 		peerConnection->notify (msg);
 	}
 
@@ -199,7 +199,7 @@ struct Processor : AudioEffect
 
 	int getActivePattern () const { return open303Core.sequencer.getActivePattern (); }
 
-	void setSeqParameter (int32 pid, ParamValue value)
+	void setSeqParameter (uint32 pid, ParamValue value)
 	{
 		if (pid >= asIndex (SeqPatternParameterID::Key0) &&
 			pid <= asIndex (SeqPatternParameterID::Key15))
