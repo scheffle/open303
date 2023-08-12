@@ -127,6 +127,8 @@ struct Controller : U::Extends<EditControllerEx1, U::Directly<IMidiMapping>>
 
 	using Parameter = vst3utils::parameter;
 
+	static const constexpr UnitID uidPattern = 'patt';
+
 	template<typename T>
 	Parameter* getParameter (T pid, size_t offset = 0) const
 	{
@@ -139,6 +141,8 @@ struct Controller : U::Extends<EditControllerEx1, U::Directly<IMidiMapping>>
 		auto result = EditControllerEx1::initialize (context);
 		if (result != kResultTrue)
 			return result;
+
+		addUnit (new Unit (u"Pattern", uidPattern));
 
 		for (auto pid = 0u; pid < Parameters::count (); ++pid)
 		{
@@ -205,6 +209,7 @@ struct Controller : U::Extends<EditControllerEx1, U::Directly<IMidiMapping>>
 		for (const auto& desc : seqParameterDescriptions)
 		{
 			auto param = new Parameter (pid, desc);
+			param->getInfo ().unitId = uidPattern;
 			parameters.addParameter (param);
 			++pid;
 		}
