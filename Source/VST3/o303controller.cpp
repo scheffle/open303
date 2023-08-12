@@ -216,6 +216,8 @@ struct Controller : U::Extends<EditControllerEx1, U::Directly<IMidiMapping>>
 			Clear,
 			ShiftLeft,
 			ShiftRight,
+			PatternUp,
+			PatternDown,
 		};
 
 		static constexpr vst3utils::param::description copyParamDesc =
@@ -228,6 +230,10 @@ struct Controller : U::Extends<EditControllerEx1, U::Directly<IMidiMapping>>
 			vst3utils::param::steps_description (u"ShiftLeft", 0, steps_functions<1> ());
 		static constexpr vst3utils::param::description shiftRightParamDesc =
 			vst3utils::param::steps_description (u"ShiftRight", 0, steps_functions<1> ());
+		static constexpr vst3utils::param::description patternUpParamDesc =
+			vst3utils::param::steps_description (u"PatternUp", 0, steps_functions<1> ());
+		static constexpr vst3utils::param::description patternDownParamDesc =
+			vst3utils::param::steps_description (u"PatternDown", 0, steps_functions<1> ());
 		auto copyParam = std::make_unique<vst3utils::parameter> (UIParamID::Copy, copyParamDesc);
 		auto pasteParam = std::make_unique<vst3utils::parameter> (UIParamID::Paste, pasteParamDesc);
 		auto clearParam = std::make_unique<vst3utils::parameter> (UIParamID::Clear, clearParamDesc);
@@ -235,6 +241,10 @@ struct Controller : U::Extends<EditControllerEx1, U::Directly<IMidiMapping>>
 			std::make_unique<vst3utils::parameter> (UIParamID::ShiftLeft, shiftLeftParamDesc);
 		auto shiftRightParam =
 			std::make_unique<vst3utils::parameter> (UIParamID::ShiftRight, shiftRightParamDesc);
+		auto patternUpParam =
+			std::make_unique<vst3utils::parameter> (UIParamID::PatternUp, patternUpParamDesc);
+		auto patternDownParam =
+			std::make_unique<vst3utils::parameter> (UIParamID::PatternDown, patternDownParamDesc);
 
 		copyParam->add_listener ([this] (auto&, auto value) {
 			if (value > 0.5)
@@ -256,12 +266,28 @@ struct Controller : U::Extends<EditControllerEx1, U::Directly<IMidiMapping>>
 			if (value > 0.5)
 				performShiftRight ();
 		});
+		patternUpParam->add_listener ([this] (auto& obj, auto value) {
+			if (value > 0.5)
+			{
+				performPatternChange (1);
+				obj.setNormalized (0.);
+			}
+		});
+		patternDownParam->add_listener ([this] (auto& obj, auto value) {
+			if (value > 0.5)
+			{
+				performPatternChange (-1);
+				obj.setNormalized (0.);
+			}
+		});
 
 		uiParams.emplace (UIParamID::Copy, std::move (copyParam));
 		uiParams.emplace (UIParamID::Paste, std::move (pasteParam));
 		uiParams.emplace (UIParamID::Clear, std::move (clearParam));
 		uiParams.emplace (UIParamID::ShiftLeft, std::move (shiftLeftParam));
 		uiParams.emplace (UIParamID::ShiftRight, std::move (shiftRightParam));
+		uiParams.emplace (UIParamID::PatternUp, std::move (patternUpParam));
+		uiParams.emplace (UIParamID::PatternDown, std::move (patternDownParam));
 
 		return kResultTrue;
 	}
@@ -393,6 +419,22 @@ struct Controller : U::Extends<EditControllerEx1, U::Directly<IMidiMapping>>
 			std::swap (data.note[i], data.note[i + 1]);
 		}
 		applyPatternData (data);
+	}
+
+	void performPatternChange (int32 amount)
+	{
+		if (auto param = getParameter (ParameterID::SeqActivePattern))
+		{
+			auto pat = param->getPlain () + amount;
+			if (pat > 16)
+				pat = 0;
+			else if (pat < 1)
+				pat = 16;
+			beginEdit (asIndex (ParameterID::SeqActivePattern));
+			param->setPlain (pat);
+			performEdit (asIndex (ParameterID::SeqActivePattern), param->getNormalized ());
+			endEdit (asIndex (ParameterID::SeqActivePattern));
+		}
 	}
 
 	tresult PLUGIN_API terminate () override { return EditControllerEx1::terminate (); }

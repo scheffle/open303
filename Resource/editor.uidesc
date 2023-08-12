@@ -162,6 +162,16 @@
 					"rgba": "#431115ff",
 					"start": "1"
 				}
+			],
+			"transparent": [
+				{
+					"rgba": "#00000000",
+					"start": "0"
+				},
+				{
+					"rgba": "#00000000",
+					"start": "1"
+				}
 			]
 		},
 		"control-tags": {
@@ -264,6 +274,8 @@
 			"ui.clear": "10002",
 			"ui.copy": "10000",
 			"ui.paste": "10001",
+			"ui.pattern.down": "10006",
+			"ui.pattern.up": "10005",
 			"ui.shift.left": "10003",
 			"ui.shift.right": "10004",
 			"volume": "7",
@@ -5257,6 +5269,66 @@
 							"text-color": "control.text",
 							"text-color-highlighted": "seq.text",
 							"title": "Clear",
+							"transparent": "false",
+							"wants-focus": "true",
+							"wheel-inc-value": "0.1"
+						}
+					},
+					"CTextButton": {
+						"attributes": {
+							"class": "CTextButton",
+							"control-tag": "ui.pattern.down",
+							"default-value": "0",
+							"font": "SmallParameterValue",
+							"frame-color": "~ TransparentCColor",
+							"frame-color-highlighted": "~ TransparentCColor",
+							"frame-width": "-1",
+							"gradient": "transparent",
+							"gradient-highlighted": "button.highlighted",
+							"icon-position": "left",
+							"icon-text-margin": "0",
+							"kick-style": "false",
+							"max-value": "1",
+							"min-value": "0",
+							"mouse-enabled": "true",
+							"opacity": "1",
+							"origin": "610, 130",
+							"round-radius": "2",
+							"size": "9, 12",
+							"text-alignment": "center",
+							"text-color": "control.text",
+							"text-color-highlighted": "control.text",
+							"title": "<",
+							"transparent": "false",
+							"wants-focus": "true",
+							"wheel-inc-value": "0.1"
+						}
+					},
+					"CTextButton": {
+						"attributes": {
+							"class": "CTextButton",
+							"control-tag": "ui.pattern.up",
+							"default-value": "0",
+							"font": "SmallParameterValue",
+							"frame-color": "~ TransparentCColor",
+							"frame-color-highlighted": "~ TransparentCColor",
+							"frame-width": "-1",
+							"gradient": "transparent",
+							"gradient-highlighted": "button.highlighted",
+							"icon-position": "left",
+							"icon-text-margin": "0",
+							"kick-style": "false",
+							"max-value": "1",
+							"min-value": "0",
+							"mouse-enabled": "true",
+							"opacity": "1",
+							"origin": "631, 130",
+							"round-radius": "2",
+							"size": "9, 12",
+							"text-alignment": "center",
+							"text-color": "control.text",
+							"text-color-highlighted": "control.text",
+							"title": ">",
 							"transparent": "false",
 							"wants-focus": "true",
 							"wheel-inc-value": "0.1"
