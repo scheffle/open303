@@ -150,9 +150,12 @@ void Open303::noteOn(int noteNumber, int velocity)
   {
     if( velocity == 0 )
     {
-      sequencer.stop();
-      releaseNote(currentNote);
-      currentNote = -1;
+      if( noteNumber == currentNote )
+      {
+        sequencer.stop();
+        releaseNote(currentNote);
+        currentNote = -1;
+      }
     }
     else
     {
