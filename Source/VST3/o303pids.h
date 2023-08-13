@@ -20,6 +20,16 @@ class AcidPattern;
 namespace o303 {
 
 using Steinberg::Vst::ParamID;
+using Steinberg::Vst::UnitID;
+
+//------------------------------------------------------------------------
+enum class Unit : UnitID
+{
+	pattern = 'patt'
+};
+
+//------------------------------------------------------------------------
+constexpr UnitID asUnitID (Unit u) { return static_cast<UnitID> (u); }
 
 //------------------------------------------------------------------------
 enum class ParameterID

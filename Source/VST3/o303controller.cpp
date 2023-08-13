@@ -127,8 +127,6 @@ struct Controller : U::Extends<EditControllerEx1, U::Directly<IMidiMapping>>
 
 	using Parameter = vst3utils::parameter;
 
-	static const constexpr UnitID uidPattern = 'patt';
-
 	template<typename T>
 	Parameter* getParameter (T pid, size_t offset = 0) const
 	{
@@ -142,7 +140,7 @@ struct Controller : U::Extends<EditControllerEx1, U::Directly<IMidiMapping>>
 		if (result != kResultTrue)
 			return result;
 
-		addUnit (new Unit (u"Pattern", uidPattern));
+		addUnit (new Vst::Unit (u"Pattern", asUnitID (Unit::pattern)));
 
 		for (auto pid = 0u; pid < Parameters::count (); ++pid)
 		{
@@ -209,7 +207,7 @@ struct Controller : U::Extends<EditControllerEx1, U::Directly<IMidiMapping>>
 		for (const auto& desc : seqParameterDescriptions)
 		{
 			auto param = new Parameter (pid, desc);
-			param->getInfo ().unitId = uidPattern;
+			param->getInfo ().unitId = asUnitID (Unit::pattern);
 			parameters.addParameter (param);
 			++pid;
 		}
@@ -655,6 +653,24 @@ bool saveAcidPattern (const rosic::AcidPattern& pattern, Steinberg::IBStream* st
 		s.writeBool (pattern.getGate (step));
 	}
 	return true;
+}
+
+//------------------------------------------------------------------------
+PatternData toPatternData (const rosic::AcidPattern& pattern)
+{
+	PatternData data {};
+	data.stepLength = pattern.getStepLength ();
+	data.tempoMul = pattern.getTempoMul ();
+	data.numSteps = pattern.getNumSteps ();
+	for (auto step = 0; step < 16; ++step)
+	{
+		data.note[step].key = pattern.getKey (step);
+		data.note[step].octave = pattern.getOctave (step);
+		data.note[step].accent = pattern.getAccent (step);
+		data.note[step].slide = pattern.getSlide (step);
+		data.note[step].gate = pattern.getGate (step);
+	}
+	return data;
 }
 
 //------------------------------------------------------------------------

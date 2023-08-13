@@ -11,8 +11,10 @@
 #include "public.sdk/source/vst/utility/rttransfer.h"
 #include "public.sdk/source/vst/utility/sampleaccurate.h"
 #include "public.sdk/source/vst/vstaudioeffect.h"
+#include "pluginterfaces/base/funknownimpl.h"
 #include "pluginterfaces/vst/ivstparameterchanges.h"
 #include "pluginterfaces/vst/ivstprocesscontext.h"
+#include "pluginterfaces/vst/ivstunits.h"
 
 //------------------------------------------------------------------------
 namespace o303 {
@@ -33,7 +35,7 @@ enum class ChordFollow
 };
 
 //------------------------------------------------------------------------
-struct Processor : AudioEffect
+struct Processor : U::Extends<AudioEffect, U::Directly<IUnitData>>
 {
 	using RTTransfer = RTTransferT<Parameters>;
 	Parameters parameter;
@@ -135,6 +137,37 @@ struct Processor : AudioEffect
 		return kInternalError;
 	}
 
+	tresult PLUGIN_API unitDataSupported (UnitID unitID) override
+	{
+		return unitID == asUnitID (Unit::pattern);
+	}
+
+	tresult PLUGIN_API getUnitData (UnitID unitId, IBStream* data) override
+	{
+		if (unitId != asUnitID (Unit::pattern))
+			return kInvalidArgument;
+		auto activePatternindex = open303Core.sequencer.getActivePattern ();
+		if (auto pattern = open303Core.sequencer.getPattern (activePatternindex))
+		{
+			if (saveAcidPattern (*pattern, data))
+				return kResultTrue;
+		}
+		return kResultFalse;
+	}
+
+	tresult PLUGIN_API setUnitData (UnitID unitId, IBStream* data) override
+	{
+		if (unitId != asUnitID (Unit::pattern))
+			return kInvalidArgument;
+		auto activePatternindex = open303Core.sequencer.getActivePattern ();
+		if (auto pattern = open303Core.sequencer.getPattern (activePatternindex))
+		{
+			if (loadAcidPattern (*pattern, data))
+				return kResultTrue;
+		}
+		return kResultFalse;
+	}
+
 	tresult PLUGIN_API notify (IMessage* message) override
 	{
 		vst3utils::message msg (message);
@@ -164,17 +197,7 @@ struct Processor : AudioEffect
 		auto attributes = msg.get_attributes ();
 		if (!attributes.is_valid ())
 			return;
-		PatternData data {};
-		data.stepLength = pattern->getStepLength ();
-		data.numSteps = pattern->getNumSteps ();
-		for (auto step = 0; step < 16; ++step)
-		{
-			data.note[step].key = pattern->getKey (step);
-			data.note[step].octave = pattern->getOctave (step);
-			data.note[step].accent = pattern->getAccent (step);
-			data.note[step].slide = pattern->getSlide (step);
-			data.note[step].gate = pattern->getGate (step);
-		}
+		PatternData data = toPatternData (*pattern);
 		attributes.set (msgIDPattern, data);
 		peerConnection->notify (msg);
 	}
