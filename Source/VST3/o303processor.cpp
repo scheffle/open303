@@ -269,6 +269,24 @@ struct Processor : U::Extends<AudioEffect, U::Directly<IUnitData>>
 			open303Core.sequencer.getPattern (getActivePattern ())
 				->setNumSteps (vst3utils::normalized_to_steps (MaxSeqPatternSteps - 1, 1, value));
 		}
+		else if (pid == asIndex (SeqPatternParameterID::TempoMul))
+		{
+			double tempoMul = 1.;
+			auto index = vst3utils::normalized_to_steps (SeqPatternTempo.size () - 1, 0, value);
+			switch (index)
+			{
+				case 0:
+					tempoMul = 2;
+					break;
+				case 1:
+					tempoMul = 1.;
+					break;
+				case 2:
+					tempoMul = 0.5;
+					break;
+			}
+			open303Core.sequencer.setPatternTempoMul (tempoMul);
+		}
 	}
 
 	void updateParameter (size_t index, double value)

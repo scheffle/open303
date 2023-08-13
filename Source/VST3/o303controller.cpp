@@ -333,6 +333,17 @@ struct Controller : U::Extends<EditControllerEx1, U::Directly<IMidiMapping>>
 			if (performEdit)
 				performEditOfCurrentValue (*p);
 		}
+		if (auto p = getParameter (SeqPatternParameterID::TempoMul))
+		{
+			if (data.tempoMul < 1.)
+				p->setNormalized (1.);
+			else if (data.tempoMul < 1.5)
+				p->setNormalized (0.5);
+			else if (data.tempoMul >= 1.5)
+				p->setNormalized (0.);
+			if (performEdit)
+				performEditOfCurrentValue (*p);
+		}
 		for (auto i = 0; i < 16; ++i)
 		{
 			if (auto p = getParameter (SeqPatternParameterID::Key0, i))
@@ -507,6 +518,28 @@ struct Controller : U::Extends<EditControllerEx1, U::Directly<IMidiMapping>>
 		return kResultTrue;
 	}
 
+	tresult PLUGIN_API setUnitProgramData (int32 listOrUnitId, int32 programIndex,
+										   IBStream* data) override
+	{
+		if (programIndex >= 0)
+			return kInvalidArgument;
+		if (listOrUnitId != asUnitID (Unit::pattern))
+			return kInvalidArgument;
+		return loadPatternData (data) ? kResultTrue : kResultFalse;
+	}
+
+	bool loadPatternData (IBStream* data, bool performEdit = false)
+	{
+		rosic::AcidPattern pattern;
+		if (loadAcidPattern (pattern, data))
+		{
+			auto patternData = toPatternData (pattern);
+			applyPatternData (patternData, performEdit);
+			return true;
+		}
+		return false;
+	}
+
 	tresult PLUGIN_API getMidiControllerAssignment (int32 busIndex, int16 channel,
 													CtrlNumber midiControllerNumber,
 													ParamID& id) override
@@ -588,7 +621,7 @@ bool saveParameterState (const Parameters& parameter, Steinberg::IBStream* strea
 }
 
 static constexpr int32 patStateID = 'patt';
-static constexpr int32 patStateVersion = 1;
+static constexpr int32 patStateVersion = 2;
 
 //------------------------------------------------------------------------
 bool loadAcidPattern (rosic::AcidPattern& pattern, Steinberg::IBStream* stream)
@@ -601,10 +634,16 @@ bool loadAcidPattern (rosic::AcidPattern& pattern, Steinberg::IBStream* stream)
 	if (!s.readInt32 (version) || version > patStateVersion) // future build?
 		return false;
 
-	double stepLength {};
-	if (!s.readDouble (stepLength))
+	double dv {};
+	if (!s.readDouble (dv))
 		return false;
-	pattern.setStepLength (stepLength);
+	pattern.setStepLength (dv);
+	if (version > 1)
+	{
+		if (!s.readDouble (dv))
+			return false;
+		pattern.setTempoMul (dv);
+	}
 	int32 numSteps {};
 	if (!s.readInt32 (numSteps) || numSteps != pattern.getMaxNumSteps ())
 		return false;
@@ -642,6 +681,7 @@ bool saveAcidPattern (const rosic::AcidPattern& pattern, Steinberg::IBStream* st
 	s.writeInt32 (patStateID);
 	s.writeInt32 (patStateVersion);
 	s.writeDouble (pattern.getStepLength ());
+	s.writeDouble (pattern.getTempoMul ());
 	s.writeInt32 (pattern.getMaxNumSteps ());
 	s.writeInt32 (pattern.getNumSteps ());
 	for (auto step = 0; step < pattern.getMaxNumSteps (); ++step)

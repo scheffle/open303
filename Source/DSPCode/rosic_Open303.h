@@ -348,7 +348,7 @@ namespace rosic
           }
           else
           {
-            noteOffCountDown = sequencer.getStepLengthInSamples();
+            noteOffCountDown = sequencer.getStepLengthInSamples()*sequencer.getPatternTempoMul();
             slideToNextNote  = false;
           }
         }

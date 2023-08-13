@@ -66,6 +66,9 @@ namespace rosic
 
 	void setNumSteps(int steps) { numSteps = steps; }
 
+	/** Sets the tempo multiplication of the pattern */
+	void setTempoMul (double newTempo) { tempo = newTempo; }
+	
     /** Sets the key for one of the steps (between 0...12, where 0 and 12 is a C). */
     void setKey(int step, int newKey) { notes[step].key = newKey; }
 
@@ -107,6 +110,9 @@ namespace rosic
     is one 16th note). */
     double getStepLength() const { return stepLength; }
 
+	/** Returns the tempo multiplication of the pattern */
+	double getTempoMul() const { return tempo; }
+
     /** Returns the key for one of the steps (between 0...12, where 0 and 12 is a C). */
     int getKey(int step) const { return notes[step].key; }
 
@@ -143,6 +149,7 @@ namespace rosic
 
     int    numSteps;         // number of steps in the pattern
     double stepLength;       // step length in step units (16th notes)
+    double tempo;
 
   };
 

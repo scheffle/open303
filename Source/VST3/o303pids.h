@@ -140,6 +140,7 @@ struct PatternData
 		int8_t gate;
 	};
 	double stepLength;
+	double tempoMul;
 	int32_t numSteps;
 	Note note[16];
 };
@@ -149,6 +150,8 @@ static constexpr auto NumSeqOctaves = 4u;
 
 static const constexpr std::array SeqKeyStrings = {u"C", u"C#", u"D", u"D#", u"E", u"F", u"F#",
 												   u"G", u"G#", u"A", u"A#", u"B", u"C`"};
+
+static const constexpr std::array SeqPatternTempo = {u"0.5x", u"1x", u"2x"};
 
 //------------------------------------------------------------------------
 enum class SeqPatternParameterID
@@ -240,6 +243,8 @@ enum class SeqPatternParameterID
 	Gate13,
 	Gate14,
 	Gate15,
+
+	TempoMul,
 
 	enum_end,
 };
@@ -339,6 +344,8 @@ static constexpr vst3utils::enum_array<vst3utils::param::description, SeqPattern
 			list_description (u"Gate 14", 0, vst3utils::param::strings_on_off),
 			list_description (u"Gate 15", 0, vst3utils::param::strings_on_off),
 			list_description (u"Gate 16", 0, vst3utils::param::strings_on_off),
+
+			list_description (u"Tempo Mul", 1, SeqPatternTempo),
 		 }
 };
 
@@ -347,6 +354,8 @@ bool saveParameterState (const Parameters& parameter, Steinberg::IBStream* strea
 
 bool loadAcidPattern (rosic::AcidPattern& pattern, Steinberg::IBStream* stream);
 bool saveAcidPattern (const rosic::AcidPattern& pattern, Steinberg::IBStream* stream);
+
+PatternData toPatternData (const rosic::AcidPattern& pattern);
 
 //------------------------------------------------------------------------
 } // o303

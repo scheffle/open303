@@ -72,6 +72,9 @@ namespace rosic
     void setStepLength(double newStepLength) 
     { patterns[activePattern].setStepLength(newStepLength); }
 
+	void setPatternTempoMul(double tempoMul)
+	{ patterns[activePattern].setTempoMul(tempoMul); }
+
     /** Circularly shifts the active pattern by the given number of steps. */
     void circularShift(int numSteps) { patterns[activePattern].circularShift(numSteps); }
 
@@ -117,6 +120,8 @@ namespace rosic
 
     /** Returns the selected sequencer mode @see sequencerModes. */
     int getSequencerMode() const { return sequencerMode; }
+
+	double getPatternTempoMul() const { return patterns[activePattern].getTempoMul(); }
 
     /** Returns, if the given key is among the permissible ones. */
     bool isKeyPermissible(int key);
@@ -195,7 +200,7 @@ namespace rosic
     }
     else
     {
-      double secondsToNextStep = beatsToSeconds(0.25, bpm);
+      double secondsToNextStep = beatsToSeconds(0.25, bpm) * getPatternTempoMul();
       double samplesToNextStep = secondsToNextStep * sampleRate;
       countDown                = roundToInt(samplesToNextStep);
 
