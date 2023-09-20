@@ -393,7 +393,7 @@ struct Controller : U::Extends<EditControllerEx1, U::Directly<IMidiMapping>>
 	void performPaste ()
 	{
 #ifdef SMTG_ENABLE_VSTGUI_SUPPORT
-		if (auto data = VSTGUI::CClipboard::get ())
+		if (auto data = CClipboard::get ())
 		{
 			for (auto it = begin (data); it != end (data); ++it)
 			{
