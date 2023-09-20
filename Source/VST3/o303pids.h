@@ -96,7 +96,7 @@ static constexpr std::array<vst3utils::param::description, Parameters::count ()>
 	parameterDescriptions = {
 		{
 			{range_description (u"waveform", 0.85, linear_functions<0, 1> (), 0)},
-			{range_description (u"tuning", 400, linear_functions<400, 480> (), 0, u"Hz")},
+			{range_description (u"tuning", 440, linear_functions<400, 480> (), 0, u"Hz")},
 			{range_description (u"cutoff", 2394, exponent_functions<314, 2394> (), 0, u"Hz")},
 			{range_description (u"resonance", 50, linear_functions<0, 100> (), 0)},
 			{range_description (u"envmod", 25, linear_functions<0, 100> (), 0, u"%")},
