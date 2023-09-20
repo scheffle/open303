@@ -2,6 +2,12 @@
 
 ![Open303 Screenshot](Resource/C81FEB9C94F14346A9A7A84D91E4E5FE_snapshot.png)
 
+This is a VST3 port of Open303 with the following VST3 features added:
+
+- silence flag (if no sound is produced, the silence flag is set so that following plug-ins don't need to process the audio data)
+- support for single & double precision processing
+- support for chord and scale events to limit the used pitches for the sequencer
+
 ## How to build
 
 ### You need:
